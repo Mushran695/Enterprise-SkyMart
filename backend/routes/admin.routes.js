@@ -1,12 +1,12 @@
 import express from "express"
 import User from "../models/User.js"
 import { protect, adminOnly } from "../middleware/admin.middleware.js"
-import { getAnalytics } from "../controllers/analytics.controller.js"
+import { getDashboardStats } from "../controllers/analytics.controller.js"
 
 const router = express.Router()
 
 // 🔹 Admin Analytics
-router.get("/analytics", protect, adminOnly, getAnalytics)
+router.get("/analytics", protect, adminOnly, getDashboardStats)
 
 // 🔹 Get All Users (Admin Only)
 router.get("/users", protect, adminOnly, async (req, res) => {
