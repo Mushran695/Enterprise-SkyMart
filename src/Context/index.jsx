@@ -1,121 +1,124 @@
-import { createContext, useState, useEffect, useMemo } from 'react'
+import { createContext, useEffect, useState } from "react"
+import api from "../api"
 
 export const ShoppingCartContext = createContext()
 
 export const ShoppingCartProvider = ({ children }) => {
-  /* ================= CART ================= */
-  const [count, setCount] = useState(0)
-  const [cartProducts, setCartProducts] = useState([])
-  const [order, setOrder] = useState([])
-
-  /* ================= UI ================= */
-  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false)
-  const [isCheckoutSideMenuOpen, setIsCheckoutSideMenuOpen] = useState(false)
-  const [productToShow, setProductToShow] = useState({})
-  const [isLoading, setIsLoading] = useState(true)
-
-  /* ================= PRODUCTS ================= */
+  /* =======================
+      PRODUCTS
+  ======================= */
   const [items, setItems] = useState([])
   const [filteredItems, setFilteredItems] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  /* ================= FILTERS ================= */
-  const [searchByTitle, setSearchByTitle] = useState('')
-  const [searchByCategory, setSearchByCategory] = useState('')
+  /* =======================
+      CART
+  ======================= */
+  const [cartItems, setCartItems] = useState([])
+  const [isCheckoutSideMenuOpen, setIsCheckoutSideMenuOpen] = useState(false)
+
+  /* =======================
+      ORDERS
+  ======================= */
+  const [orders, setOrders] = useState([])
+
+  /* =======================
+      UI
+  ======================= */
+  const [isProductDetailOpen, setIsProductDetailOpen] = useState(false)
+  const [productToShow, setProductToShow] = useState(null)
+
+  /* =======================
+      AUTH
+  ======================= */
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  )
+  const [account, setAccount] = useState(
+    JSON.parse(localStorage.getItem("user") || "null")
+  )
+
+  /* =======================
+      FILTERS
+  ======================= */
+  const [searchByTitle, setSearchByTitle] = useState("")
+  const [searchByCategory, setSearchByCategory] = useState("")
   const [priceRange, setPriceRange] = useState(null)
   const [minRating, setMinRating] = useState(null)
   const [onlyFeatured, setOnlyFeatured] = useState(false)
   const [onlyDiscount, setOnlyDiscount] = useState(false)
 
-  /* ================= AUTH ================= */
-  const [account, setAccount] = useState(null)
-  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false)
+  /* =======================
+      FETCH PRODUCTS
+  ======================= */
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true)
+      const res = await api.get("/products")
 
-  /* ================= UI ACTIONS ================= */
-  const openProductDetail = () => setIsProductDetailOpen(true)
-  const closeProductDetail = () => setIsProductDetailOpen(false)
-  const openCheckoutSideMenu = () => setIsCheckoutSideMenuOpen(true)
-  const closeCheckoutSideMenu = () => setIsCheckoutSideMenuOpen(false)
+      const products = res.data?.products || res.data || []
 
-  /* ================= LOAD SESSION ================= */
-  useEffect(() => {
-    const savedAccount = localStorage.getItem('account')
-    const savedAuth = localStorage.getItem('isUserAuthenticated')
-    const savedOrder = localStorage.getItem('order')
+      const normalized = products.map(p => ({
+        ...p,
+        _id: p._id || p.id,
+        title: p.title || p.name || "",
+        name: p.name || p.title || "",
+        image: p.image || p.images?.[0] || "",
+        category:
+          typeof p.category === "object"
+            ? p.category?.name || ""
+            : p.category || "",
+        price: Number(p.price) || 0,
+        rating: Number(p.rating) || 0,
+        discount: Number(p.discount) || 0,
+        isFeatured: Boolean(p.isFeatured),
+      }))
 
-    if (savedAccount && savedAuth === 'true') {
-      setAccount(JSON.parse(savedAccount))
-      setIsUserAuthenticated(true)
+      setItems(normalized)
+      setFilteredItems(normalized)
+    } catch {
+      setError("Failed to load products")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    if (savedOrder) setOrder(JSON.parse(savedOrder))
-  }, [])
-
-  /* ================= FETCH PRODUCTS ================= */
   useEffect(() => {
-    setIsLoading(true)
-
-    fetch('https://kolzsticks.github.io/Free-Ecommerce-Products-Api/main/products.json')
-      .then(res => res.json())
-      .then(data => {
-        const normalized = data.map(item => {
-          // ✅ SAFE PRICE HANDLING
-          const usdPrice =
-            typeof item.price === 'number' && item.price > 0
-              ? item.price
-              : Math.floor(Math.random() * 40) + 10 // fallback USD 10–50
-
-          const priceINR = Math.round(usdPrice * 80)
-
-          const discount = Math.random() > 0.6 ? 50 : 0
-          const finalPrice = discount
-            ? Math.round(priceINR - (priceINR * discount) / 100)
-            : priceINR
-
-          return {
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            images: [item.image],
-            category: { name: item.category },
-
-            price: finalPrice,
-            originalPrice: priceINR,
-            discount,
-
-            rating: Math.floor(Math.random() * 2) + 4,
-            featured: Math.random() > 0.7
-          }
-        })
-
-        setItems(normalized)
-        setFilteredItems(normalized)
-        setIsLoading(false)
-      })
-      .catch(() => setIsLoading(false))
+    fetchProducts()
   }, [])
 
-  /* ================= FILTER LOGIC ================= */
-  const filteredProducts = useMemo(() => {
-    return items
-      .filter(p =>
-        !searchByTitle ||
+  /* =======================
+      FILTER LOGIC
+  ======================= */
+  useEffect(() => {
+    let result = [...items]
+
+    if (searchByTitle) {
+      result = result.filter(p =>
         p.title.toLowerCase().includes(searchByTitle.toLowerCase())
       )
-      .filter(p =>
-        !searchByCategory || p.category.name === searchByCategory
+    }
+
+    if (searchByCategory) {
+      result = result.filter(p =>
+        p.category.toLowerCase().includes(searchByCategory.toLowerCase())
       )
-      .filter(p =>
-        !priceRange || (p.price >= priceRange[0] && p.price <= priceRange[1])
-      )
-      .filter(p =>
-        !minRating || p.rating >= minRating
-      )
-      .filter(p =>
-        !onlyFeatured || p.featured
-      )
-      .filter(p =>
-        !onlyDiscount || p.discount > 0
-      )
+    }
+
+    if (priceRange) {
+      const [min, max] = priceRange
+      result = result.filter(p => p.price >= min && p.price <= max)
+    }
+
+    if (minRating) {
+      result = result.filter(p => p.rating >= minRating)
+    }
+
+    if (onlyFeatured) result = result.filter(p => p.isFeatured)
+    if (onlyDiscount) result = result.filter(p => p.discount >= 50)
+
+    setFilteredItems(result)
   }, [
     items,
     searchByTitle,
@@ -123,53 +126,148 @@ export const ShoppingCartProvider = ({ children }) => {
     priceRange,
     minRating,
     onlyFeatured,
-    onlyDiscount
+    onlyDiscount,
   ])
 
+  /* =======================
+      CART API
+  ======================= */
+  const loadCart = async () => {
+    try {
+      const res = await api.get("/cart")
+      setCartItems(res.data?.items || [])
+    } catch {
+      console.error("Load cart failed")
+    }
+  }
+
   useEffect(() => {
-    setFilteredItems(filteredProducts)
-  }, [filteredProducts])
+    if (isUserAuthenticated) loadCart()
+    else setCartItems([])
+  }, [isUserAuthenticated])
 
-  /* ================= CART METHODS ================= */
-  const addToCart = product => {
-    setCartProducts(prev => [...prev, product])
-    setCount(prev => prev + 1)
-    openCheckoutSideMenu()
+  const addToCart = async (product) => {
+    try {
+      await api.post("/cart", {
+        productId: product._id,
+        title: product.name || product.title,
+        price: product.price,
+        image: product.image,
+      })
+      await loadCart()
+      setIsCheckoutSideMenuOpen(true)
+    } catch {
+      console.error("Add to cart failed")
+    }
   }
 
-  const removeFromCart = id => {
-    setCartProducts(prev => prev.filter(p => p.id !== id))
-    setCount(prev => Math.max(prev - 1, 0))
+  const removeFromCart = async (productId) => {
+    try {
+      await api.delete(`/cart/${productId}`)
+      await loadCart()
+    } catch {
+      console.error("Remove failed")
+    }
   }
 
-  /* ================= CONTEXT PROVIDER ================= */
+  /* =======================
+      AMAZON STYLE QTY UPDATE
+  ======================= */
+  const updateCartQty = async (productId, newQty) => {
+  if (newQty < 1) {
+    await removeFromCart(productId)
+    return
+  }
+
+  try {
+    await api.put("/cart/update", {
+      productId,
+      qty: newQty
+    })
+
+    // reload real MongoDB cart
+    await loadCart()
+  } catch {
+    console.error("Qty update failed")
+  }
+}
+
+  /* =======================
+      ORDERS
+  ======================= */
+  const loadOrders = async () => {
+    try {
+      const res = await api.get("/orders/my")
+      setOrders(res.data || [])
+    } catch {
+      console.error("Orders load failed")
+    }
+  }
+
+  useEffect(() => {
+    if (isUserAuthenticated) loadOrders()
+    else setOrders([])
+  }, [isUserAuthenticated])
+
+  const checkoutOrder = async () => {
+    const products = cartItems.map(i => ({
+      product: i.product,
+      title: i.title,
+      price: i.price,
+      quantity: i.qty,
+    }))
+
+    const totalAmount = cartItems.reduce(
+      (sum, i) => sum + i.price * i.qty,
+      0
+    )
+
+    const res = await api.post("/orders", { products, totalAmount })
+
+    setCartItems([])
+    await loadOrders()
+    return res.data
+  }
+
+  /* =======================
+      UI HELPERS
+  ======================= */
+  const openProductDetail = () => setIsProductDetailOpen(true)
+  const closeProductDetail = () => setIsProductDetailOpen(false)
+  const openCheckoutSideMenu = () => setIsCheckoutSideMenuOpen(true)
+  const closeCheckoutSideMenu = () => setIsCheckoutSideMenuOpen(false)
+
   return (
     <ShoppingCartContext.Provider
       value={{
-        count,
-        cartProducts,
+        items,
+        filteredItems,
+        isLoading,
+        error,
+
+        cartItems,
         addToCart,
         removeFromCart,
-        order,
-        setOrder,
+        updateCartQty,
+        checkoutOrder,
+
+        orders,
 
         isProductDetailOpen,
         openProductDetail,
         closeProductDetail,
+        productToShow,
+        setProductToShow,
+
         isCheckoutSideMenuOpen,
         openCheckoutSideMenu,
         closeCheckoutSideMenu,
-        productToShow,
-        setProductToShow,
-        isLoading,
-
-        items,
-        filteredItems,
 
         searchByTitle,
         setSearchByTitle,
         searchByCategory,
         setSearchByCategory,
+
         priceRange,
         setPriceRange,
         minRating,
@@ -179,8 +277,10 @@ export const ShoppingCartProvider = ({ children }) => {
         onlyDiscount,
         setOnlyDiscount,
 
+        isUserAuthenticated,
         account,
-        isUserAuthenticated
+        setIsUserAuthenticated,
+        setAccount,
       }}
     >
       {children}

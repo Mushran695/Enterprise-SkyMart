@@ -9,19 +9,37 @@ import {
 import { ShoppingCartContext } from '../../Context'
 
 const Navbar = () => {
-  const context = useContext(ShoppingCartContext)
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const handleSignOut = (e) => {
+  const {
+    cartItems = [],
+    isUserAuthenticated = false,
+    account = null,
+    setSearchByTitle = () => {},
+    setSearchByCategory = () => {},
+    openCheckoutSideMenu = () => {},
+    setIsUserAuthenticated = () => {},
+    setAccount = () => {},
+  } = useContext(ShoppingCartContext) || {}
+
+  // ✅ MongoDB-safe cart count (uses quantity)
+  const cartCount = Array.isArray(cartItems)
+    ? cartItems.reduce((sum, item) => sum + (item.qty || 1), 0)
+    : 0
+
+  const handleLogout = (e) => {
     e.preventDefault()
-    context.handleSignOut()
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setIsUserAuthenticated(false)
+    setAccount(null)
     navigate('/sign-in')
     setIsMenuOpen(false)
   }
 
   const handleCategoryClick = (category) => {
-    context.setSearchByCategory(category)
+    setSearchByCategory(category)
     navigate('/')
     setIsMenuOpen(false)
   }
@@ -29,19 +47,13 @@ const Navbar = () => {
   return (
     <nav className="w-full bg-[#131921] text-white">
 
-      {/* ================= TOP NAVBAR ================= */}
+      {/* ================= TOP BAR ================= */}
       <div className="relative z-20">
         <div className="flex items-center px-4 md:px-6 py-3 gap-4">
 
           {/* MOBILE MENU */}
-          <button
-            className="md:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen
-              ? <XMarkIcon className="h-6 w-6" />
-              : <Bars3Icon className="h-6 w-6" />
-            }
+          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </button>
 
           {/* LOGO */}
@@ -50,7 +62,7 @@ const Navbar = () => {
           </NavLink>
 
           {/* LOCATION */}
-          <div className="hidden md:flex items-center gap-1 cursor-pointer hover:outline outline-1 outline-white p-1 rounded">
+          <div className="hidden md:flex items-center gap-1 hover:outline outline-1 outline-white p-1 rounded">
             <MapPinIcon className="h-5 w-5 text-gray-300" />
             <div className="leading-tight">
               <p className="text-xs text-gray-300">Deliver to</p>
@@ -61,62 +73,54 @@ const Navbar = () => {
           {/* SEARCH BAR */}
           <div className="hidden md:flex flex-1 max-w-3xl mx-4">
             <div className="flex w-full rounded-md overflow-hidden">
-
-              {/* CATEGORY SELECT (FIXED) */}
               <select
                 className="bg-gray-200 text-black px-3 text-sm outline-none"
                 onChange={(e) => handleCategoryClick(e.target.value)}
               >
                 <option value="">All</option>
-                <option value="Fashion & Apparel">Fashion</option>
-                <option value="Electronics & Gadgets">Electronics</option>
-                <option value="Beauty & Personal Care">Beauty</option>
-                <option value="Health & Fitness">Wellness</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Beauty">Beauty</option>
+                <option value="Health">Wellness</option>
               </select>
 
-              {/* SEARCH INPUT */}
               <input
                 type="text"
                 placeholder="Search SkyMart"
                 className="flex-1 px-4 py-2 text-black outline-none"
-                onChange={(e) => context.setSearchByTitle(e.target.value)}
+                onChange={(e) => setSearchByTitle(e.target.value)}
               />
 
-              {/* SEARCH BUTTON */}
-              <button className="bg-[#febd69] px-4 flex items-center justify-center text-black">
-                🔍
-              </button>
+              <button className="bg-[#febd69] px-4 text-black">🔍</button>
             </div>
           </div>
 
-          {/* RIGHT ACTIONS */}
+          {/* RIGHT SIDE */}
           <div className="flex items-center gap-6 ml-auto">
 
-            {/* SIGN IN */}
-            {context.isUserAuthenticated ? (
-              <div className="hidden md:block cursor-pointer hover:outline outline-1 outline-white p-1 rounded">
-                <p className="text-xs">Hello, {context.account?.email}</p>
-                <p className="font-semibold text-sm">Account & Lists</p>
-              </div>
-            ) : (
-              <NavLink
-                to="/sign-in"
-                className="hidden md:block cursor-pointer hover:outline outline-1 outline-white p-1 rounded"
-              >
-                <p className="text-xs">Hello, Sign in</p>
-                <p className="font-semibold text-sm">Account & Lists</p>
-              </NavLink>
-            )}
+            {/* ACCOUNT */}
+            <NavLink
+  to="/sign-in"
+  className="hidden md:block hover:outline outline-1 outline-white p-1 rounded"
+>
+  <p className="text-xs">
+    Hello, {isUserAuthenticated ? account?.email || "User" : "Sign in"}
+  </p>
+  <p className="font-semibold text-sm">Account & Lists</p>
+</NavLink>
+
 
             {/* CART */}
             <button
-              onClick={() => context.openCheckoutSideMenu()}
+              onClick={openCheckoutSideMenu}
               className="relative flex items-end gap-1 hover:outline outline-1 outline-white p-1 rounded"
             >
               <ShoppingCartIcon className="h-7 w-7" />
-              <span className="absolute top-0 right-6 bg-[#f08804] text-black w-5 h-5 text-xs flex items-center justify-center rounded-full font-bold">
-                {context.cartProducts.length}
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute top-0 right-6 bg-[#f08804] text-black w-5 h-5 text-xs flex items-center justify-center rounded-full font-bold">
+                  {cartCount}
+                </span>
+              )}
               <span className="hidden md:block font-semibold">Cart</span>
             </button>
           </div>
@@ -128,37 +132,23 @@ const Navbar = () => {
             type="text"
             placeholder="Search SkyMart"
             className="w-full px-4 py-2 rounded-lg outline-none text-black"
-            onChange={(e) => context.setSearchByTitle(e.target.value)}
+            onChange={(e) => setSearchByTitle(e.target.value)}
           />
         </div>
       </div>
 
       {/* ================= CATEGORY BAR ================= */}
-      <div className="sticky top-0 z-10 bg-[#232f3e] text-white">
-        <div className="flex items-center gap-6 px-4 md:px-6 py-2 text-sm overflow-x-auto">
-
-          <button
-            onClick={() => handleCategoryClick('')}
-            className="font-semibold whitespace-nowrap hover:underline"
-          >
-            All
-          </button>
-
-          <button onClick={() => handleCategoryClick('Fashion & Apparel')}>
-            Fashion
-          </button>
-
-          <button onClick={() => handleCategoryClick('Electronics & Gadgets')}>
-            Electronics
-          </button>
-
-          <button onClick={() => handleCategoryClick('Beauty & Personal Care')}>
-            Beauty
-          </button>
-
-          <button onClick={() => handleCategoryClick('Health & Fitness')}>
-            Wellness
-          </button>
+      <div className="bg-[#232f3e] text-white">
+        <div className="flex gap-6 px-4 py-2 text-sm overflow-x-auto">
+          {['', 'Fashion', 'Electronics', 'Beauty', 'Wellness'].map((cat, i) => (
+            <button
+              key={i}
+              onClick={() => handleCategoryClick(cat)}
+              className="whitespace-nowrap hover:underline"
+            >
+              {cat || 'All'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -174,15 +164,15 @@ const Navbar = () => {
 
           <ul className="flex flex-col py-4 text-lg">
             <li className="px-4 py-2" onClick={() => handleCategoryClick('')}>All</li>
-            <li className="px-4 py-2" onClick={() => handleCategoryClick('Fashion & Apparel')}>Fashion</li>
-            <li className="px-4 py-2" onClick={() => handleCategoryClick('Electronics & Gadgets')}>Electronics</li>
-            <li className="px-4 py-2" onClick={() => handleCategoryClick('Beauty & Personal Care')}>Beauty</li>
-            <li className="px-4 py-2" onClick={() => handleCategoryClick('Health & Fitness')}>Wellness</li>
+            <li className="px-4 py-2" onClick={() => handleCategoryClick('Fashion')}>Fashion</li>
+            <li className="px-4 py-2" onClick={() => handleCategoryClick('Electronics')}>Electronics</li>
+            <li className="px-4 py-2" onClick={() => handleCategoryClick('Beauty')}>Beauty</li>
+            <li className="px-4 py-2" onClick={() => handleCategoryClick('Wellness')}>Wellness</li>
           </ul>
 
-          {context.isUserAuthenticated && (
-            <div className="border-t mt-auto px-4 py-4">
-              <button onClick={handleSignOut} className="text-red-600">
+          {isUserAuthenticated && (
+            <div className="border-t px-4 py-4">
+              <button onClick={handleLogout} className="text-red-600">
                 Sign Out
               </button>
             </div>

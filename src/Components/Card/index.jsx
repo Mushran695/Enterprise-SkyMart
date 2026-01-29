@@ -1,89 +1,84 @@
-import { useContext } from 'react'
-import { ShoppingCartContext } from '../../Context'
+import { useContext } from "react"
+import { ShoppingCartContext } from "../../Context"
+import { CheckIcon } from "@heroicons/react/24/solid"
 
 const Card = ({ data }) => {
   const context = useContext(ShoppingCartContext)
 
-  const showProduct = () => {
+  const cartItems = Array.isArray(context?.cartItems)
+    ? context.cartItems
+    : []
+
+  const {
+    _id,
+    name = "",
+    title = "",
+    price = 0,
+    image = "",
+    category = "",
+  } = data || {}
+
+  const productName = name || title
+
+  // ✅ Handles both productId OR populated product
+  const isInCart = cartItems.some(
+    item => item.product === _id || item.product?._id === _id
+  )
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation()
+    context.addToCart(data)
+  }
+
+  const handleOpenProduct = () => {
     context.setProductToShow(data)
     context.openProductDetail()
   }
 
-  const addProductToCart = (e) => {
-    e.stopPropagation()
-
-    const alreadyInCart = context.cartProducts.some(
-      product => product.id === data.id
-    )
-
-    if (!alreadyInCart) {
-      context.addToCart(data)
-    }
-  }
-
-  const isInCart = context.cartProducts.some(
-    product => product.id === data.id
-  )
-
   return (
     <div
-      onClick={showProduct}
-      className="bg-white w-full max-w-[260px] mx-auto border hover:shadow-md transition cursor-pointer"
+      onClick={handleOpenProduct}
+      className="bg-white border rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col overflow-hidden"
     >
-      {/* IMAGE */}
-      <div className="relative w-full h-[240px] p-3">
-        {/* CATEGORY */}
-        <span className="absolute top-3 left-3 bg-gray-100 text-xs px-2 py-1 rounded">
-          {data.category?.name}
-        </span>
-
-        {/* DISCOUNT */}
-        {data.discount > 0 && (
-          <span className="absolute top-3 right-3 bg-red-600 text-white text-xs px-2 py-1 rounded">
-            {data.discount}% off
+      <div className="relative w-full h-56 flex items-center justify-center bg-gray-50">
+        <img
+          src={image || "/placeholder.png"}
+          alt={productName}
+          className="h-full w-full object-contain p-4 transition-transform duration-300 hover:scale-105"
+        />
+        {isInCart && (
+          <span className="absolute top-2 right-2 bg-green-600 text-white p-1 rounded-full shadow">
+            <CheckIcon className="w-4 h-4" />
           </span>
         )}
-
-        <img
-          src={data.images?.[0] || 'https://via.placeholder.com/300'}
-          alt={data.title}
-          className="w-full h-full object-contain"
-          loading="lazy"
-        />
       </div>
 
-      {/* CONTENT */}
-      <div className="px-3 pb-4 flex flex-col gap-2">
-        {/* TITLE */}
-        <p className="text-sm font-medium leading-snug line-clamp-2 hover:text-orange-600">
-          {data.title}
-        </p>
+      <div className="p-4 flex flex-col flex-grow gap-2">
+        <p className="text-xs text-gray-500 uppercase mb-1">{category}</p>
 
-        {/* PRICE */}
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold">
-            ₹{data.price}
-          </span>
+        <h3 className="text-sm font-medium text-gray-900 line-clamp-2">
+          {productName}
+        </h3>
 
-          {data.discount > 0 && (
-            <span className="text-sm text-gray-500 line-through">
-              ₹{data.originalPrice}
-            </span>
-          )}
+        <div className="mt-2 flex items-center gap-1">
+          <span className="text-xs text-gray-500">₹</span>
+          <span className="text-lg font-bold">{price}</span>
         </div>
 
-        {/* ADD TO CART */}
-        <button
-          onClick={addProductToCart}
-          disabled={isInCart}
-          className={`mt-2 w-full py-2 text-sm rounded-full font-medium transition ${
-            isInCart
-              ? 'bg-gray-300 text-black cursor-not-allowed'
-              : 'bg-[#ffd814] hover:bg-[#f7ca00]'
-          }`}
-        >
-          {isInCart ? 'Added to Cart' : 'Add to Cart'}
-        </button>
+        <div className="mt-auto pt-4">
+          {!isInCart ? (
+            <button
+              onClick={handleAddToCart}
+              className="w-full bg-yellow-400 hover:bg-yellow-500 text-black text-sm py-2 rounded-lg font-semibold shadow hover:shadow-md transition"
+            >
+              Add to Cart
+            </button>
+          ) : (
+            <div className="w-full text-center bg-green-100 text-green-700 py-2 rounded-md text-sm font-medium">
+              In Cart
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

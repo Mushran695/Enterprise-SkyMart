@@ -1,61 +1,54 @@
-import { useContext, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { ShoppingCartContext } from '../Context'
+import { useContext, useState } from "react"
+import { ShoppingCartContext } from "../Context"
 
 const SidebarFilter = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-
   const {
-    setPriceRange,
+    searchByCategory,
+    setSearchByCategory,
     setMinRating,
     setOnlyFeatured,
-    setOnlyDiscount
+    setOnlyDiscount,
+    setMaxPrice,
   } = useContext(ShoppingCartContext)
 
-  /* =======================
-     CATEGORY CONFIG
-  ======================= */
-  const categories = [
-    { label: 'Fashion', path: '/fashion' },
-    { label: 'Electronics', path: '/electronics' },
-    { label: 'Beauty', path: '/beauty' },
-    { label: 'Wellness', path: '/wellness' }
-  ]
-
-  /* =======================
-     PRICE STATE
-  ======================= */
-  const [minPrice, setMinPrice] = useState(0)
-  const [maxPrice, setMaxPrice] = useState(100000)
+  const categories = ["Fashion", "Electronics", "Beauty", "Wellness"]
+  const [price, setPrice] = useState(100000)
 
   return (
-    <aside className="w-64 bg-white border border-gray-200 p-4 h-fit sticky top-24">
+    <aside className="w-72 bg-white border border-gray-200 rounded-xl shadow-sm p-5 h-fit sticky top-24">
+
+      {/* TITLE */}
+      <h2 className="text-xl font-semibold mb-4 border-b pb-3">
+        Filters
+      </h2>
 
       {/* =======================
-          CATEGORIES (NEW)
+          CATEGORIES
       ======================= */}
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-3">Categories</h2>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+          Categories
+        </h3>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
           {categories.map(cat => {
-            const isActive = location.pathname === cat.path
+            const isActive =
+              searchByCategory?.toLowerCase() === cat.toLowerCase()
 
             return (
               <button
-                key={cat.label}
-                onClick={() => navigate(cat.path)}
+                key={cat}
+                onClick={() => setSearchByCategory(cat)}
                 className={`
-                  text-left px-3 py-2 rounded-md text-sm transition
+                  text-left px-4 py-2 rounded-lg text-sm transition font-medium
                   ${
                     isActive
-                      ? 'bg-orange-100 text-orange-600 font-semibold'
-                      : 'hover:bg-gray-100 text-gray-700'
+                      ? "bg-orange-100 text-orange-600 shadow-inner"
+                      : "hover:bg-gray-100 text-gray-700"
                   }
                 `}
               >
-                {cat.label}
+                {cat}
               </button>
             )
           })}
@@ -63,103 +56,97 @@ const SidebarFilter = () => {
       </div>
 
       {/* =======================
-          FILTERS
+          PRICE
       ======================= */}
-      <h2 className="text-lg font-semibold mb-4 border-t pt-4">
-        Filter by
-      </h2>
-
-      {/* PRICE */}
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold mb-2">Price</h3>
+      <div className="mb-6 border-t pt-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+          Price
+        </h3>
 
         <div className="flex justify-between text-xs text-gray-600 mb-2">
-          <span>₹{minPrice}</span>
-          <span>₹{maxPrice}</span>
+          <span>₹0</span>
+          <span className="font-medium">₹{price}</span>
         </div>
 
-        <div className="space-y-2">
-          <input
-            type="range"
-            min="0"
-            max="100000"
-            step="500"
-            value={minPrice}
-            onChange={(e) => setMinPrice(Number(e.target.value))}
-            className="w-full accent-orange-500"
-          />
-
-          <input
-            type="range"
-            min="0"
-            max="100000"
-            step="500"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(Number(e.target.value))}
-            className="w-full accent-orange-500"
-          />
-        </div>
-
-        <button
-          className="mt-3 w-full border border-gray-400 py-1 text-sm hover:border-orange-500 hover:text-orange-600"
-          onClick={() => setPriceRange([minPrice, maxPrice])}
-        >
-          Apply
-        </button>
+        <input
+          type="range"
+          min="0"
+          max="100000"
+          step="500"
+          value={price}
+          onChange={(e) => {
+            const value = Number(e.target.value)
+            setPrice(value)
+            setMaxPrice(value)
+          }}
+          className="w-full accent-orange-500 cursor-pointer"
+        />
       </div>
 
-      {/* RATING */}
-      <div className="mb-5 border-t pt-4">
-        <h3 className="text-sm font-semibold mb-2">
+      {/* =======================
+          RATING
+      ======================= */}
+      <div className="mb-6 border-t pt-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
           Customer Rating
         </h3>
 
-        <button
-          className="block text-sm hover:text-orange-600 mb-1"
-          onClick={() => setMinRating(4)}
-        >
-          ⭐⭐⭐⭐ & Up
-        </button>
+        <div className="space-y-2">
+          <button
+            className="flex items-center gap-2 text-sm hover:text-orange-600"
+            onClick={() => setMinRating(4)}
+          >
+            ⭐⭐⭐⭐ <span className="text-gray-600">& Up</span>
+          </button>
 
-        <button
-          className="block text-sm hover:text-orange-600"
-          onClick={() => setMinRating(5)}
-        >
-          ⭐⭐⭐⭐⭐
-        </button>
+          <button
+            className="flex items-center gap-2 text-sm hover:text-orange-600"
+            onClick={() => setMinRating(5)}
+          >
+            ⭐⭐⭐⭐⭐
+          </button>
+        </div>
       </div>
 
-      {/* DEALS */}
-      <div className="mb-5 border-t pt-4">
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
+      {/* =======================
+          DEALS
+      ======================= */}
+      <div className="mb-6 border-t pt-5 space-y-3">
+        <label className="flex items-center gap-3 text-sm cursor-pointer">
           <input
             type="checkbox"
-            className="accent-orange-500"
+            className="accent-orange-500 w-4 h-4"
             onChange={(e) => setOnlyFeatured(e.target.checked)}
           />
-          Featured Products
+          <span className="font-medium text-gray-700">
+            Featured Products
+          </span>
         </label>
 
-        <label className="flex items-center gap-2 text-sm cursor-pointer text-red-600 mt-2">
+        <label className="flex items-center gap-3 text-sm cursor-pointer">
           <input
             type="checkbox"
-            className="accent-red-600"
+            className="accent-red-600 w-4 h-4"
             onChange={(e) => setOnlyDiscount(e.target.checked)}
           />
-          50% OFF or more
+          <span className="font-medium text-red-600">
+            50% OFF or more
+          </span>
         </label>
       </div>
 
-      {/* CLEAR */}
+      {/* =======================
+          CLEAR
+      ======================= */}
       <button
-        className="text-sm text-blue-600 hover:underline"
+        className="w-full py-2 text-sm font-medium rounded-lg border hover:bg-gray-100 transition"
         onClick={() => {
-          setPriceRange(null)
+          setSearchByCategory("")
           setMinRating(null)
           setOnlyFeatured(false)
           setOnlyDiscount(false)
-          setMinPrice(0)
-          setMaxPrice(100000)
+          setMaxPrice(null)
+          setPrice(100000)
         }}
       >
         Clear all filters
