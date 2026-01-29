@@ -1,4 +1,4 @@
-import Product from "../../models/Product.js"
+import Product from "../models/Product.js"
 import Order from "../models/Order.model.js"
 import User from "../models/User.model.js"
 
