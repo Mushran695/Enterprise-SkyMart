@@ -7,8 +7,9 @@ import authRoutes from "./routes/auth.routes.js"
 import productRoutes from "./routes/product.routes.js"
 import adminRoutes from "./routes/admin.routes.js"
 import cartRoutes from "./routes/cart.routes.js"   // 🔥 REQUIRED
-import orderRoutes from "./src/routes/order.routes.js" // 🔥 REQUIRED
-import paymentRoutes from "./routes/payment.routes.js";
+import orderRoutes from "./routes/order.routes.js" // 🔥 REQUIRED
+import paymentRoutes from "./routes/payment.routes.js"
+import analyticsRoutes from "./routes/analytics.routes.js"
 dotenv.config()
 
 const app = express()
@@ -23,7 +24,8 @@ app.use("/api/products", productRoutes)
 app.use("/api/admin", adminRoutes)
 app.use("/api/cart", cartRoutes)        // 🔥 REQUIRED
 app.use("/api/orders", orderRoutes)     // 🔥 REQUIRED
-app.use("/api/payment", paymentRoutes);
+app.use("/api/payment", paymentRoutes)
+app.use("/api/analytics", analyticsRoutes)
 app.get("/", (req, res) => {
   res.send("API Running")
 })
