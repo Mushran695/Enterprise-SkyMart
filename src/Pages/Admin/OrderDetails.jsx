@@ -1,110 +1,74 @@
 import { useParams, useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 const OrderDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [order, setOrder] = useState(null)
+  const [status, setStatus] = useState("")
 
-  // ✅ MOCK ORDER (later replace with API)
-  const order = {
-    id,
-    status: "Pending",
-    user: { email: "john@gmail.com" },
-    date: "2026-01-15",
-    total: 2499,
-    items: [
-      { id: 1, title: "Wireless Headphones", price: 1999, qty: 1 },
-      { id: 2, title: "Mobile Cover", price: 500, qty: 1 },
-    ],
+  useEffect(() => {
+    fetchOrder()
+  }, [id])
+
+  const fetchOrder = async () => {
+    const res = await fetch(`http://localhost:5000/api/orders/admin/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
+    const data = await res.json()
+    setOrder(data)
+    setStatus(capitalize(data.status))
   }
 
-  const [status, setStatus] = useState(order.status)
+  const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1)
 
-  const statusColor = {
-    Pending: "bg-yellow-100 text-yellow-700",
-    Shipped: "bg-blue-100 text-blue-700",
-    Delivered: "bg-green-100 text-green-700",
+  const updateStatus = async (value) => {
+    setStatus(value)
+    await fetch(`http://localhost:5000/api/orders/admin/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({ status: value.toLowerCase() })
+    })
   }
+
+  if (!order) return <p className="p-6">Loading...</p>
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
-          Order #{id}
-        </h1>
+      <button
+        onClick={() => navigate(-1)}
+        className="px-4 py-2 bg-gray-200 rounded"
+      >
+        ← Back
+      </button>
 
-        <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-        >
-          ← Back
-        </button>
-      </div>
+      <h1 className="text-2xl font-semibold">Order {order._id}</h1>
 
-      {/* Order Info */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Customer */}
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">Customer</h3>
-          <p>Email: {order.user.email}</p>
-          <p>Date: {order.date}</p>
-        </div>
+      <p>Email: {order.user?.email}</p>
+      <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
+      <p className="text-xl font-bold">₹{order.totalAmount}</p>
 
-        {/* Status */}
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">Order Status</h3>
+      <select
+        value={status}
+        onChange={e => updateStatus(e.target.value)}
+        className="border px-3 py-2 rounded"
+      >
+        <option>Pending</option>
+        <option>Shipped</option>
+        <option>Delivered</option>
+      </select>
 
-          <span
-            className={`inline-block px-3 py-1 rounded-full text-sm mb-3 ${
-              statusColor[status] || "bg-gray-100 text-gray-700"
-            }`}
-          >
-            {status}
-          </span>
-
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="block w-full border rounded px-3 py-2"
-          >
-            <option value="Pending">Pending</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-          </select>
-        </div>
-
-        {/* Total */}
-        <div className="bg-white p-4 rounded shadow">
-          <h3 className="font-semibold mb-2">Order Total</h3>
-          <p className="text-2xl font-bold">₹{order.total}</p>
-        </div>
-      </div>
-
-      {/* Items Table */}
-      <div className="bg-white rounded shadow overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Product</th>
-              <th className="p-3 text-center">Price</th>
-              <th className="p-3 text-center">Qty</th>
-              <th className="p-3 text-right">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.items.map((item) => (
-              <tr key={item.id} className="border-t">
-                <td className="p-3">{item.title}</td>
-                <td className="p-3 text-center">₹{item.price}</td>
-                <td className="p-3 text-center">{item.qty}</td>
-                <td className="p-3 text-right font-medium">
-                  ₹{item.price * item.qty}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="bg-white rounded shadow mt-6">
+        {order.products.map((p, i) => (
+          <div key={i} className="p-3 border-b">
+            {p.title} × {p.qty || 1} — ₹{(p.price || 0) * (p.qty || 1)}
+          </div>
+        ))}
       </div>
     </div>
   )

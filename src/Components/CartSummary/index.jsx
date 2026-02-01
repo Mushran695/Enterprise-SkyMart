@@ -6,7 +6,7 @@ import Layout from "../../Components/Layout"
 import { formatINR } from "../../utils"
 import { createOrder } from "../../services/payment"
 
-const RAZORPAY_KEY = "rzp_test_xxxxxxxxxx" // 🔑 Your Razorpay Public Key
+const RAZORPAY_KEY = "rzp_test_SA848OYsod4lAU" // 🔑 Your Razorpay Public Key
 
 const CartSummary = () => {
   const {
@@ -35,9 +35,8 @@ const CartSummary = () => {
       return
     }
 
-    const amount = Math.round(cartTotal * 100)   // 🔥 THIS IS THE FIX
+    const amount = Math.round(cartTotal)   // send rupees only
     const order = await createOrder(amount)
-
 
 
       const options = {
@@ -48,28 +47,72 @@ const CartSummary = () => {
         description: "Order Payment",
         order_id: order.id,
 
-        handler: async function (response) {
-          try {
-            const verifyRes = await fetch(
-              "http://localhost:5000/api/payment/verify-payment",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(response)
-              }
-            )
+     handler: async function (response) {
+  try {
+    const payload = {
+      razorpay_order_id: response.razorpay_order_id,
+      razorpay_payment_id: response.razorpay_payment_id,
+      razorpay_signature: response.razorpay_signature,
+    }
 
-            const data = await verifyRes.json()
+    // 1️⃣ VERIFY PAYMENT
+    const verifyRes = await fetch(
+      "http://localhost:5000/api/payment/verify-payment",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    )
 
-            if (data.success) {
-              alert("Payment Successful & Verified 🎉")
-            } else {
-              alert("Payment verification failed")
-            }
-          } catch (err) {
-            alert("Server verification failed")
-          }
+    const verifyData = await verifyRes.json()
+
+    if (!verifyData.success) {
+      alert("Payment verification failed ❌")
+      return
+    }
+
+    // 2️⃣ SAVE ORDER IN DATABASE
+    const orderRes = await fetch(
+      "http://localhost:5000/api/orders/place",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
         },
+        body: JSON.stringify({
+  ...payload,
+  totalAmount: cartTotal,
+  items: cartItems.map(i => ({
+    product: i.product,
+    title: i.title,
+    price: i.price,
+    quantity: i.qty,
+    image: i.image
+  }))
+})
+
+      }
+    )
+
+    const orderData = await orderRes.json()
+
+    if (!orderData.success) {
+      alert("Order saving failed")
+      return
+    }
+
+    alert("Payment & Order Successful 🎉")
+    navigate("/orders")
+
+  } catch (err) {
+    console.error(err)
+    alert("Payment success but backend error")
+  }
+},
+
+
 
         prefill: {
           name: user?.name || "Customer",

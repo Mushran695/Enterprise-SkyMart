@@ -1,9 +1,11 @@
 import Order from "../models/Orders.js"
 import Product from "../models/Product.js"
 
-/**
- * Get active cart
- */
+/* ======================================================
+   CART & CUSTOMER ORDER FUNCTIONS
+====================================================== */
+
+// Get active cart
 export const getCart = async (req, res) => {
   try {
     const cart = await Order.findOne({
@@ -21,9 +23,7 @@ export const getCart = async (req, res) => {
   }
 }
 
-/**
- * Add product to cart
- */
+// Add to cart
 export const addToCart = async (req, res) => {
   try {
     const { productId, qty } = req.body
@@ -51,7 +51,7 @@ export const addToCart = async (req, res) => {
     } else {
       cart.products.push({
         product: product._id,
-        title: product.name,
+        name: product.name,
         price: product.price,
         qty,
       })
@@ -63,16 +63,13 @@ export const addToCart = async (req, res) => {
     )
 
     await cart.save()
-
     res.json(cart)
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
 }
 
-/**
- * Update quantity
- */
+// Update cart item
 export const updateCartItem = async (req, res) => {
   try {
     const { productId, qty } = req.body
@@ -100,9 +97,7 @@ export const updateCartItem = async (req, res) => {
   }
 }
 
-/**
- * Remove from cart
- */
+// Remove from cart
 export const removeFromCart = async (req, res) => {
   try {
     const { productId } = req.body
@@ -122,5 +117,52 @@ export const removeFromCart = async (req, res) => {
     res.json(cart)
   } catch (err) {
     res.status(500).json({ message: err.message })
+  }
+}
+
+/* ======================================================
+   ADMIN ORDER MANAGEMENT
+====================================================== */
+
+// Get all orders (Admin)
+export const getAllOrdersAdmin = async (req, res) => {
+  try {
+    const orders = await Order.find({ status: { $ne: "cart" } })
+      .sort({ createdAt: -1 })
+      .populate("user", "email")
+
+    res.json(orders)
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch orders" })
+  }
+}
+
+// Get one order (Admin)
+export const getOrderByIdAdmin = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate("user", "email")
+
+    if (!order) return res.status(404).json({ message: "Order not found" })
+
+    res.json(order)
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch order" })
+  }
+}
+
+// Update order status (Admin)
+export const updateOrderStatusAdmin = async (req, res) => {
+  try {
+    const { status } = req.body
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    )
+
+    res.json(order)
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update status" })
   }
 }

@@ -1,46 +1,54 @@
 import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const Orders = () => {
   const navigate = useNavigate()
+  const [orders, setOrders] = useState([])
 
-  // ✅ Orders state (important for status change)
-  const [orders, setOrders] = useState([
-    {
-      id: "ORD-1001",
-      user: "john@gmail.com",
-      total: 2499,
-      status: "Pending",
-      date: "2026-01-15",
-    },
-    {
-      id: "ORD-1002",
-      user: "admin@gmail.com",
-      total: 4999,
-      status: "Delivered",
-      date: "2026-01-16",
-    },
-  ])
+  useEffect(() => {
+    fetchOrders()
+  }, [])
 
-  // ✅ Status color helper
-  const statusColor = status => {
-    switch (status) {
-      case "Pending":
-        return "text-yellow-600"
-      case "Shipped":
-        return "text-blue-600"
-      case "Delivered":
-        return "text-green-600"
-      default:
-        return "text-gray-600"
-    }
+  const fetchOrders = async () => {
+    const res = await fetch("http://localhost:5000/api/orders/admin", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
+    const data = await res.json()
+
+    const formatted = data.map(o => ({
+      id: o._id,
+      user: o.user?.email || "Guest",
+      total: o.totalAmount,
+      status: capitalize(o.status),
+      date: new Date(o.createdAt).toISOString().split("T")[0]
+    }))
+
+    setOrders(formatted)
   }
 
-  // ✅ Status update handler
-  const updateStatus = (id, newStatus) => {
+  const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1)
+
+  const statusColor = status => {
+    if (status === "Delivered") return "text-green-600"
+    if (status === "Shipped") return "text-blue-600"
+    return "text-yellow-600"
+  }
+
+  const updateStatus = async (id, newStatus) => {
+    await fetch(`http://localhost:5000/api/orders/admin/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({ status: newStatus.toLowerCase() })
+    })
+
     setOrders(prev =>
-      prev.map(order =>
-        order.id === id ? { ...order, status: newStatus } : order
+      prev.map(o =>
+        o.id === id ? { ...o, status: newStatus } : o
       )
     )
   }
@@ -65,49 +73,33 @@ const Orders = () => {
           <tbody>
             {orders.map(order => (
               <tr key={order.id} className="border-t">
-                <td className="p-3 font-medium">{order.id}</td>
+                <td className="p-3">{order.id}</td>
                 <td className="p-3">{order.user}</td>
                 <td className="p-3">₹{order.total}</td>
 
-                {/* ✅ STATUS */}
                 <td className={`p-3 font-medium ${statusColor(order.status)}`}>
                   {order.status}
                 </td>
 
                 <td className="p-3">{order.date}</td>
 
-                {/* ✅ ACTIONS */}
                 <td className="p-3 flex gap-2">
-                  {/* VIEW */}
                   <button
                     onClick={() => navigate(`/admin/orders/${order.id}`)}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-3 py-1 bg-blue-600 text-white rounded"
                   >
                     View
                   </button>
 
-                  {/* STATUS CHANGE */}
                   {order.status !== "Delivered" && (
                     <select
-                      className="px-2 py-1 text-sm border rounded"
                       value={order.status}
-                      onChange={e =>
-                        updateStatus(order.id, e.target.value)
-                      }
+                      onChange={e => updateStatus(order.id, e.target.value)}
+                      className="border px-2 py-1 rounded"
                     >
-                      {order.status === "Pending" && (
-                        <>
-                          <option value="Pending">Pending</option>
-                          <option value="Shipped">Shipped</option>
-                        </>
-                      )}
-
-                      {order.status === "Shipped" && (
-                        <>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                        </>
-                      )}
+                      <option value="Pending">Pending</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
                     </select>
                   )}
                 </td>

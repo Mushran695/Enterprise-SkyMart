@@ -1,38 +1,29 @@
 import axios from "axios"
 
-const API = axios.create({
-  baseURL: "http://localhost:5000/api/analytics",
-  withCredentials: true
+const API = "http://localhost:5000/api/analytics"
+
+const auth = () => ({
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`
+  }
 })
 
-/* ================================
-   DASHBOARD CARDS
-================================ */
 export const getAdminStats = async () => {
-  const res = await API.get("/")
-  return res.data
+  const { data } = await axios.get(`${API}/stats`, auth())
+  return data
 }
 
-/* ================================
-   ORDERS PER MONTH
-================================ */
 export const getOrderStats = async () => {
-  const res = await API.get("/orders")
-  return res.data
+  const { data } = await axios.get(`${API}/orders`, auth())
+  return data
 }
 
-/* ================================
-   REVENUE PER MONTH
-================================ */
 export const getRevenueStats = async () => {
-  const res = await API.get("/revenue")
-  return res.data
+  const { data } = await axios.get(`${API}/revenue`, auth())
+  return data
 }
 
-/* ================================
-   CATEGORY PIE
-================================ */
 export const getCategoryStats = async () => {
-  const res = await API.get("/categories")
-  return res.data
+  const { data } = await axios.get(`${API}/categories`, auth())
+  return data
 }

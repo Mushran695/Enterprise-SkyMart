@@ -1,32 +1,33 @@
-import { ChevronRightIcon } from '@heroicons/react/24/solid'
-import { formatINR } from '../../utils'
+import { useEffect, useState } from "react"
+import OrdersCard from "../../Components/OrdersCard"
 
-const OrdersCard = ({ date, totalPrice, totalProducts }) => {
+const Orders = () => {
+  const [orders, setOrders] = useState([])
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/orders/my", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => setOrders(data))
+  }, [])
+
   return (
-    <div className="flex justify-between items-center mb-3 border border-black rounded-lg p-4 w-80 hover:shadow-md transition-shadow">
-      <div className="flex justify-between w-full items-center">
-        
-        {/* LEFT */}
-        <div className="flex flex-col">
-          <span className="font-light text-sm text-gray-600">
-            {date}
-          </span>
-          <span className="font-light text-sm">
-            {totalProducts} items
-          </span>
-        </div>
+    <div className="flex flex-col items-center mt-10">
+      <h1 className="text-2xl font-bold mb-6">My Orders</h1>
 
-        {/* RIGHT */}
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-xl">
-            {formatINR(totalPrice)}
-          </span>
-          <ChevronRightIcon className="h-6 w-6 text-black" />
-        </div>
-
-      </div>
+      {orders.map(order => (
+        <OrdersCard
+          key={order._id}
+          date={new Date(order.createdAt).toLocaleDateString()}
+          totalPrice={order.totalAmount}
+          totalProducts={order.items.length}
+        />
+      ))}
     </div>
   )
 }
 
-export default OrdersCard
+export default Orders

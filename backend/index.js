@@ -10,6 +10,7 @@ import orderRoutes from "./src/routes/order.routes.js"
 import adminUserRoutes from "./src/routes/admin.user.routes.js"
 import cartRoutes from "./routes/cart.routes.js"
 import paymentRoutes from "./routes/payment.routes.js"   // 🔥 ADD THIS
+// import analyticsRoutes from "./src/routes/analytics.routes.js"
 
 dotenv.config()
 connectDB()
@@ -38,6 +39,9 @@ app.use("/api/orders", orderRoutes)
 
 // Admin users
 app.use("/api/admin/users", adminUserRoutes)
+
+//  Analytics
+// app.use("/api/analytics", analyticsRoutes)
 
 app.get("/", (req, res) => {
   res.send("API running")
