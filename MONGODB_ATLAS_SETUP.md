@@ -1,73 +1,51 @@
 # MongoDB Atlas Connection Setup
 
-## Your Connection Details
-**Connection String (Base):**
+## ⚠️ SECURITY WARNING - CREDENTIALS EXPOSED
+Your MongoDB credentials were exposed on GitHub. Follow these steps immediately:
+
+### 1. ROTATE YOUR MONGODB PASSWORD (DO THIS NOW!)
+1. Go to https://cloud.mongodb.com/v2/697f1e1ec055faa91bef2b2f#/security/database
+2. Find user `syedishaqmushran_db_user`
+3. Click "Edit" and change the password to a NEW strong password
+4. Copy the NEW password
+
+### 2. Update Your New Connection String
+After changing the password, your new connection string will be:
 ```
-mongodb+srv://syedishaqmushran_db_user:HR8WjNsB4n4GtNnk@cluster0.unxbwej.mongodb.net/?appName=Cluster0
-```
-
-## Complete Connection String for Render
-Add the database name `skymart` to the connection string:
-
-```
-mongodb+srv://syedishaqmushran_db_user:HR8WjNsB4n4GtNnk@cluster0.unxbwej.mongodb.net/skymart?retryWrites=true&w=majority
-```
-
-## Steps to Add to Render
-
-### 1. Go to Render Dashboard
-- Navigate to https://dashboard.render.com
-- Select your Web Service (mern-ecommerce)
-
-### 2. Click "Environment" in the left sidebar
-
-### 3. Add the Environment Variable
-Click "Add Environment Variable" and enter:
-
-**Key:** `MONGO_URI`
-
-**Value:**
-```
-mongodb+srv://syedishaqmushran_db_user:HR8WjNsB4n4GtNnk@cluster0.unxbwej.mongodb.net/skymart?retryWrites=true&w=majority
+mongodb+srv://syedishaqmushran_db_user:NEW_PASSWORD@cluster0.unxbwej.mongodb.net/skymart?retryWrites=true&w=majority
 ```
 
-### 4. Save Changes
-Click "Save" and Render will automatically redeploy your app
+Replace `NEW_PASSWORD` with your newly set password.
 
-### 5. Verify Deployment
-Check the deployment logs. You should see:
-```
-✅ Cart model registered
-MongoDB Connected: cluster0.unxbwej.mongodb.net
-Server running on http://localhost:5000
-```
+### 3. Update Render Environment Variable
+1. Go to https://dashboard.render.com
+2. Select your Web Service
+3. Go to **Environment**
+4. Update `MONGO_URI` with your NEW connection string
+5. Save and redeploy
 
-## Testing Locally (Optional)
-If you want to test with MongoDB Atlas locally before deploying, update `backend/.env`:
-
+### 4. Update Local .env (Optional - for local testing)
+Edit `backend/.env`:
 ```env
-PORT=5000
-MONGO_URI=mongodb+srv://syedishaqmushran_db_user:HR8WjNsB4n4GtNnk@cluster0.unxbwej.mongodb.net/skymart?retryWrites=true&w=majority
-JWT_SECRET=skymart_super_secret
-RAZORPAY_KEY_ID=rzp_test_SA848OYsod4lAU
-RAZORPAY_KEY_SECRET=Y4d9KAwb4gfLlgOz4Vh5nkL7
+MONGO_URI=mongodb+srv://syedishaqmushran_db_user:NEW_PASSWORD@cluster0.unxbwej.mongodb.net/skymart?retryWrites=true&w=majority
 ```
 
-Then run:
-```bash
-cd backend
-npm run dev
-```
+### 5. Never Commit Credentials Again
+- `.env` is in `.gitignore` ✅
+- MONGODB_ATLAS_SETUP.md should NOT contain actual passwords ✅ (fixed)
+- Use Render's Environment Variables panel only for secrets
 
-## Security Note
-⚠️ **Important**: Keep your MongoDB credentials private!
-- Never commit credentials to git
-- `.env` file should be in `.gitignore` (it already is)
-- For production, use Render's environment variable settings (which you're doing ✅)
+## MongoDB Atlas Security Checklist
+- [ ] Changed database user password
+- [ ] Updated MONGO_URI in Render
+- [ ] Verified deployment connects successfully
+- [ ] Reviewed Database Access History for suspicious activity
+- [ ] Enabled IP Access List in Atlas (whitelist Render IP)
 
-## What Happens Next
-Once deployed:
-- ✅ All API routes will work: `/api/products`, `/api/orders`, `/api/admin`, `/api/analytics`
-- ✅ Admin CRUD operations for Products, Orders, Users
-- ✅ Shopping cart, checkout, order placement
-- ✅ Analytics dashboard with real data from MongoDB
+## Best Practices Going Forward
+1. Store all credentials in environment variables only
+2. Never commit `.env` files
+3. Use `RENDER_GIT_COMMIT` to track only non-sensitive changes
+4. Rotate passwords quarterly
+5. Monitor MongoDB Activity Feed regularly
+
