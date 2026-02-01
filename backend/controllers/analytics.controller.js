@@ -1,5 +1,5 @@
 import Product from "../models/Product.js"
-import Order from "../src/models/Order.model.js"
+import Order from "../models/order.model.js"
 
 export const getDashboardStats = async (req, res) => {
   try {
@@ -10,7 +10,7 @@ export const getDashboardStats = async (req, res) => {
     const orders = await Order.find()
 
     const totalRevenue = orders.reduce(
-      (sum, order) => sum + order.totalAmount,
+      (sum, order) => sum + (order.totalAmount || 0),
       0
     )
 
@@ -21,7 +21,7 @@ export const getDashboardStats = async (req, res) => {
     )
 
     const todayRevenue = todayOrders.reduce(
-      (sum, order) => sum + order.totalAmount,
+      (sum, order) => sum + (order.totalAmount || 0),
       0
     )
 

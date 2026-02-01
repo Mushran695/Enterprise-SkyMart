@@ -1,6 +1,6 @@
-import Order from "../models/Orders.js"
-import User from "../models/User.model.js"
-import Product from "../models/Product.js"
+import Order from "../../models/order.model.js"
+import User from "../../models/User.js"
+import Product from "../../models/Product.js"
 
 // ============================
 // DASHBOARD STATS

@@ -6,10 +6,11 @@ const cartItemSchema = new mongoose.Schema({
     ref: "Product",
     required: true
   },
+  category: String,
   title: String,
   price: Number,
   image: String,
-  qty: {
+  quantity: {
     type: Number,
     default: 1
   }
@@ -22,7 +23,11 @@ const cartSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
-    items: [cartItemSchema]
+    items: [cartItemSchema],
+    totalAmount: {
+      type: Number,
+      default: 0
+    }
   },
   { timestamps: true }
 )

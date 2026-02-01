@@ -150,6 +150,7 @@ export const ShoppingCartProvider = ({ children }) => {
     try {
       await api.post("/cart", {
         productId: product._id,
+        category: product.category,
         title: product.name || product.title,
         price: product.price,
         image: product.image,

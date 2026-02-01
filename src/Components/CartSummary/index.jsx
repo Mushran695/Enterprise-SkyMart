@@ -19,7 +19,7 @@ const CartSummary = () => {
   const navigate = useNavigate()
 
   const cartTotal = cartItems.reduce(
-    (sum, i) => sum + i.price * i.qty,
+    (sum, i) => sum + (i.price || 0) * (i.quantity || 0),
     0
   )
 
@@ -55,12 +55,15 @@ const CartSummary = () => {
       razorpay_signature: response.razorpay_signature,
     }
 
-    // 1️⃣ VERIFY PAYMENT
+    // VERIFY PAYMENT & CREATE ORDER IN ONE CALL
     const verifyRes = await fetch(
       "http://localhost:5000/api/payment/verify-payment",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify(payload)
       }
     )
@@ -72,43 +75,13 @@ const CartSummary = () => {
       return
     }
 
-    // 2️⃣ SAVE ORDER IN DATABASE
-    const orderRes = await fetch(
-      "http://localhost:5000/api/orders/place",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({
-  ...payload,
-  totalAmount: cartTotal,
-  items: cartItems.map(i => ({
-    product: i.product,
-    title: i.title,
-    price: i.price,
-    quantity: i.qty,
-    image: i.image
-  }))
-})
-
-      }
-    )
-
-    const orderData = await orderRes.json()
-
-    if (!orderData.success) {
-      alert("Order saving failed")
-      return
-    }
-
-    alert("Payment & Order Successful 🎉")
-    navigate("/orders")
+    alert("Order Placed Successfully 🎉")
+    // Navigate to order confirmation page with the MongoDB order ID
+    navigate(`/order-confirmation/${verifyData.orderId}`)
 
   } catch (err) {
     console.error(err)
-    alert("Payment success but backend error")
+    alert("Payment error: " + err.message)
   }
 },
 
@@ -188,18 +161,18 @@ const CartSummary = () => {
                       <div className="flex items-center gap-2 mt-2">
                         <button
                           onClick={() =>
-                            updateCartQty(item.product, item.qty - 1)
+                            updateCartQty(item.product, item.quantity - 1)
                           }
                           className="border px-2 rounded hover:bg-gray-100"
                         >
                           −
                         </button>
 
-                        <span className="font-medium">{item.qty}</span>
+                        <span className="font-medium">{item.quantity}</span>
 
                         <button
                           onClick={() =>
-                            updateCartQty(item.product, item.qty + 1)
+                            updateCartQty(item.product, item.quantity + 1)
                           }
                           className="border px-2 rounded hover:bg-gray-100"
                         >
@@ -210,7 +183,7 @@ const CartSummary = () => {
                   </div>
 
                   <p className="font-semibold">
-                    {formatINR(item.price * item.qty)}
+                    {formatINR((item.price || 0) * (item.quantity || 0))}
                   </p>
                 </div>
               ))}

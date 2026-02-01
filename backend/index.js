@@ -5,12 +5,10 @@ import connectDB from "./config/db.js"
 
 import authRoutes from "./routes/auth.js"
 import productRoutes from "./routes/product.routes.js"
-import adminProductRoutes from "./src/routes/admin.product.routes.js"
-import orderRoutes from "./src/routes/order.routes.js"
-import adminUserRoutes from "./src/routes/admin.user.routes.js"
+import orderRoutes from "./routes/order.routes.js"
 import cartRoutes from "./routes/cart.routes.js"
-import paymentRoutes from "./routes/payment.routes.js"   // 🔥 ADD THIS
-// import analyticsRoutes from "./src/routes/analytics.routes.js"
+import paymentRoutes from "./routes/payment.routes.js"
+import analyticsRoutes from "./routes/analytics.routes.js"
 
 dotenv.config()
 connectDB()
@@ -25,23 +23,17 @@ app.use("/api/auth", authRoutes)
 // Frontend products
 app.use("/api/products", productRoutes)
 
-// Admin products
-app.use("/api/admin/products", adminProductRoutes)
-
 // Cart
 app.use("/api/cart", cartRoutes)
 
-// Razorpay 🔥
+// Razorpay
 app.use("/api/payment", paymentRoutes)
 
 // Orders
 app.use("/api/orders", orderRoutes)
 
-// Admin users
-app.use("/api/admin/users", adminUserRoutes)
-
-//  Analytics
-// app.use("/api/analytics", analyticsRoutes)
+// Analytics
+app.use("/api/analytics", analyticsRoutes)
 
 app.get("/", (req, res) => {
   res.send("API running")

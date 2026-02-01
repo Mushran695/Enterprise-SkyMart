@@ -49,10 +49,10 @@ const MyOrder = () => {
           {currentOrder.products.map((item, idx) => (
             <OrderCard
               key={idx}
-              title={item.product?.title}
-              imageUrl={item.product?.images?.[0]}
-              price={formatINR(item.price)}
-              quantity={item.quantity}
+              title={item.title}
+              imageUrl={item.image}
+              price={item.price}
+              quantity={item.qty || item.quantity}
             />
           ))}
 

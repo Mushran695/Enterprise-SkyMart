@@ -17,9 +17,19 @@ export const placeOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" })
     }
 
+    // Transform cart items to order products format
+    const products = cart.items.map(item => ({
+      product: item.product,
+      category: item.category || "Uncategorized",
+      title: item.title,
+      price: item.price,
+      qty: item.quantity,
+      image: item.image
+    }))
+
     const order = await Order.create({
       user: userId,
-      items: cart.items,
+      products,
       totalAmount: cart.totalPrice,
       payment: {
         razorpay_order_id,

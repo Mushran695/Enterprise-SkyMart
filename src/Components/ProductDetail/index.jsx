@@ -1,4 +1,5 @@
 import { useContext } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   XMarkIcon,
   ShoppingCartIcon,
@@ -9,6 +10,7 @@ import { formatINR } from "../../utils"
 
 const ProductDetail = () => {
   const context = useContext(ShoppingCartContext)
+  const navigate = useNavigate()
   const product = context.productToShow
 
   if (!context.isProductDetailOpen || !product?._id) return null
@@ -19,6 +21,17 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (!isInCart) context.addToCart(product)
+  }
+
+  const handleBuyNow = () => {
+    // Add to cart if not already there
+    if (!isInCart) context.addToCart(product)
+    
+    // Close product detail modal
+    context.closeProductDetail()
+    
+    // Navigate to cart/checkout
+    navigate("/cart-summary")
   }
 
   return (
@@ -147,7 +160,8 @@ const ProductDetail = () => {
               </button>
 
               <button
-                className="w-full bg-orange-500 hover:bg-orange-600 py-3 rounded font-semibold flex items-center justify-center gap-2 transition"
+                onClick={handleBuyNow}
+                className="w-full bg-orange-500 hover:bg-orange-600 py-3 rounded font-semibold flex items-center justify-center gap-2 transition text-white"
               >
                 <BoltIcon className="h-5 w-5" />
                 Buy Now

@@ -1,6 +1,6 @@
 import express from "express"
-import Order from "../../models/Orders.js"
-import Product from "../../models/Product.js"
+import Order from "../models/order.model.js"
+import Product from "../models/Product.js"
 import { protect } from "../../middleware/auth.middleware.js"
 
 const router = express.Router()
@@ -24,13 +24,13 @@ router.post("/", protect, async (req, res) => {
             product: product._id,
             title: product.title,
             price: product.price,
-            qty: item.qty,
+            quantity: item.qty,
           }
         })
       )
 
       totalAmount = finalProducts.reduce(
-        (sum, p) => sum + p.price * p.qty,
+        (sum, p) => sum + p.price * p.quantity,
         0
       )
     }
@@ -42,7 +42,7 @@ router.post("/", protect, async (req, res) => {
 
     const order = await Order.create({
       user: req.user._id,
-      products: finalProducts,
+      items: finalProducts,
       totalAmount,
       status: "Pending",
     })

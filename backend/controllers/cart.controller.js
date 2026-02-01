@@ -18,7 +18,7 @@ export const getCart = async (req, res) => {
 ========================= */
 export const addToCart = async (req, res) => {
   try {
-    const { productId, title, price, image } = req.body
+    const { productId, category, title, price, image } = req.body
 
     let cart = await Cart.findOne({ user: req.user._id })
 
@@ -27,10 +27,11 @@ export const addToCart = async (req, res) => {
         user: req.user._id,
         items: [{
           product: new mongoose.Types.ObjectId(productId),
+          category,
           title,
           price,
           image,
-          qty: 1
+          quantity: 1
         }]
       })
     } else {
@@ -38,14 +39,15 @@ export const addToCart = async (req, res) => {
         i => i.product.toString() === productId
       )
 
-      if (item) item.qty += 1
+      if (item) item.quantity += 1
       else {
         cart.items.push({
           product: new mongoose.Types.ObjectId(productId),
+          category,
           title,
           price,
           image,
-          qty: 1
+          quantity: 1
         })
       }
 
@@ -96,7 +98,7 @@ export const updateQty = async (req, res) => {
         i => i.product.toString() !== productId
       )
     } else {
-      item.qty = qty
+      item.quantity = qty
     }
 
     await cart.save()

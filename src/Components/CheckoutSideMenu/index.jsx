@@ -15,7 +15,7 @@ const CheckoutSideMenu = () => {
   const navigate = useNavigate()
 
   const total = cartItems.reduce(
-    (sum, i) => sum + i.price * i.qty,
+    (sum, i) => sum + ((i.price || 0) * (i.quantity || 0)),
     0
   )
 
@@ -69,18 +69,18 @@ const CheckoutSideMenu = () => {
                 <div className="flex items-center gap-2 mt-1">
                   <button
                     onClick={() =>
-                      updateCartQty(item.product, item.qty - 1)
+                      updateCartQty(item.product, item.quantity - 1)
                     }
                     className="px-2 py-1 border rounded"
                   >
                     −
                   </button>
 
-                  <span>{item.qty}</span>
+                  <span>{item.quantity}</span>
 
                   <button
                     onClick={() =>
-                      updateCartQty(item.product, item.qty + 1)
+                      updateCartQty(item.product, item.quantity + 1)
                     }
                     className="px-2 py-1 border rounded"
                   >
@@ -92,7 +92,7 @@ const CheckoutSideMenu = () => {
 
             <div className="flex flex-col items-end gap-1">
               <p className="font-medium">
-                ${(item.price * item.qty).toFixed(2)}
+                ₹{((item.price || 0) * (item.quantity || 0)).toFixed(2)}
               </p>
               <XMarkIcon
                 className="h-5 w-5 cursor-pointer"
@@ -108,7 +108,7 @@ const CheckoutSideMenu = () => {
         <div className="flex justify-between mb-4">
           <span className="font-medium">Total:</span>
           <span className="font-medium">
-            ${total.toFixed(2)}
+            ₹{total.toFixed(2)}
           </span>
         </div>
 

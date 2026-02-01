@@ -1,8 +1,8 @@
 import express from "express"
 import Order from "../models/order.model.js"
-import Product from "../../models/Product.js"
-import User from "../../models/User.js"
-import { protect } from "../../middleware/auth.middleware.js"
+import Product from "../models/Product.js"
+import User from "../models/User.js"
+import { protect } from "../middleware/auth.middleware.js"
 
 const router = express.Router()
 
@@ -102,7 +102,7 @@ router.get("/revenue", protect, async (req, res) => {
 })
 
 /* ============================
-   CATEGORY PIE (SALES BASED)
+   CATEGORY SALES
 ============================ */
 router.get("/categories", protect, async (req, res) => {
   try {
@@ -112,14 +112,15 @@ router.get("/categories", protect, async (req, res) => {
       {
         $group: {
           _id: "$products.category",
-          total: { $sum: "$products.qty" }
+          value: { $sum: "$products.qty" }
         }
-      }
+      },
+      { $sort: { value: -1 } }
     ])
 
     const result = data.map(d => ({
-      name: d._id,
-      value: d.total
+      name: d._id || "Uncategorized",
+      value: d.value
     }))
     console.log("✅ /categories returning:", result)
     res.json(result)

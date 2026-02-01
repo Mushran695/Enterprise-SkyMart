@@ -1,14 +1,15 @@
 import express from "express"
 import {
-  getAllOrdersAdmin,
-  getOrderByIdAdmin,
-  updateOrderStatusAdmin
+  placeOrder,
+  getMyOrders
 } from "../controllers/order.controller.js"
+import Order from "../models/order.model.js"
+import { protect } from "../middleware/auth.middleware.js"
 
 const router = express.Router()
 
-router.get("/admin", getAllOrdersAdmin)
-router.get("/admin/:id", getOrderByIdAdmin)
-router.put("/admin/:id", updateOrderStatusAdmin)
+// USER ROUTES
+router.get("/my", protect, getMyOrders)
+router.post("/", protect, placeOrder)
 
 export default router

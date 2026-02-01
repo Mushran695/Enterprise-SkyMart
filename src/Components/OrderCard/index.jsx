@@ -11,14 +11,18 @@ const OrderCard = ({
   imageUrl,
   price,
   handleDelete,
+  totalPrice,
+  totalProducts,
 
   // NEW (optional)
   item,
   increaseQty,
   decreaseQty,
   buyNow,
+  quantity,
 }) => {
-  const qty = item?.qty ?? 1
+  // Handle both qty and quantity field names, plus passed quantity prop
+  const qty = item?.qty ?? item?.quantity ?? quantity ?? 1
   const finalTitle = item?.title || title
   const finalImage =
   item?.image ||
@@ -28,6 +32,26 @@ const OrderCard = ({
   const unitPrice = item?.price ?? price
   const productId = item?.product || id
 
+  // For display in My Orders list view
+  if (totalPrice && totalProducts !== undefined) {
+    return (
+      <div className="bg-white border rounded-lg p-4 hover:shadow-md transition">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="font-semibold text-gray-800">Order Summary</p>
+            <p className="text-sm text-gray-600">{totalProducts} items</p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-bold text-green-600">
+              ₹{typeof totalPrice === 'number' ? totalPrice.toFixed(2) : totalPrice}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // For detailed order items view
   return (
     <div className="grid grid-cols-[120px_1fr_180px] gap-6 border-b py-6">
       {/* IMAGE */}
@@ -91,12 +115,12 @@ const OrderCard = ({
       {/* PRICE */}
       <div className="text-right">
         <p className="text-lg font-semibold">
-          ${(unitPrice * qty).toFixed(2)}
+          ₹{((unitPrice || 0) * (qty || 1)).toFixed(2)}
         </p>
 
         {qty > 1 && (
           <p className="text-sm text-gray-500">
-            ${unitPrice} each
+            ₹{unitPrice} each
           </p>
         )}
       </div>
