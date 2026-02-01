@@ -60,3 +60,41 @@ export const getMyOrders = async (req, res) => {
 
   res.json(orders)
 }
+
+// ==========================
+// ADMIN: Orders management
+// ==========================
+export const getAllOrdersAdmin = async (req, res) => {
+  try {
+    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 })
+    res.json(orders)
+  } catch (error) {
+    console.error('Failed to fetch all orders (admin):', error)
+    res.status(500).json({ message: 'Failed to fetch orders' })
+  }
+}
+
+export const getOrderByIdAdmin = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user', 'name email')
+    if (!order) return res.status(404).json({ message: 'Order not found' })
+    res.json(order)
+  } catch (error) {
+    console.error('Failed to fetch order by id (admin):', error)
+    res.status(500).json({ message: 'Failed to fetch order' })
+  }
+}
+
+export const updateOrderStatusAdmin = async (req, res) => {
+  try {
+    const { status } = req.body
+    const order = await Order.findById(req.params.id)
+    if (!order) return res.status(404).json({ message: 'Order not found' })
+    order.status = status || order.status
+    await order.save()
+    res.json(order)
+  } catch (error) {
+    console.error('Failed to update order status (admin):', error)
+    res.status(500).json({ message: 'Failed to update order' })
+  }
+}
