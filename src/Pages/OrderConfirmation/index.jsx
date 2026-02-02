@@ -214,7 +214,7 @@ const OrderConfirmation = () => {
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-800">{item.title || item.product?.title}</h3>
                         <p className="text-sm text-gray-600 mt-1">
-                          Quantity: <span className="font-semibold">{item.quantity}</span>
+                          Quantity: <span className="font-semibold">{item.quantity || item.qty}</span>
                         </p>
                         <p className="text-sm text-gray-600">
                           Price: <span className="font-semibold">{formatINR(item.price)}</span>
@@ -222,7 +222,7 @@ const OrderConfirmation = () => {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-lg">
-                          {formatINR(item.price * item.quantity)}
+                          {formatINR(item.price * (item.quantity || item.qty))}
                         </p>
                       </div>
                     </div>
@@ -274,6 +274,12 @@ const OrderConfirmation = () => {
 
               {/* Action Buttons */}
               <div className="mt-6 space-y-3">
+                <button
+                  onClick={() => navigate(`/track-order/${order._id}`)}
+                  className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 font-semibold text-sm"
+                >
+                  Track Order
+                </button>
                 <button
                   onClick={() => navigate('/my-orders')}
                   className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-semibold text-sm"

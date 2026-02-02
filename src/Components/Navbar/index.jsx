@@ -4,13 +4,16 @@ import {
   ShoppingCartIcon,
   Bars3Icon,
   XMarkIcon,
-  MapPinIcon
+  MapPinIcon,
+  UserCircleIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/solid'
 import { ShoppingCartContext } from '../../Context'
 
 const Navbar = () => {
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
 
   const {
     cartItems = [],
@@ -18,6 +21,9 @@ const Navbar = () => {
     account = null,
     setSearchByTitle = () => {},
     setSearchByCategory = () => {},
+    items = [],
+    openProductDetail = () => {},
+    setProductToShow = () => {},
     openCheckoutSideMenu = () => {},
     setIsUserAuthenticated = () => {},
     setAccount = () => {},
@@ -36,6 +42,7 @@ const Navbar = () => {
     setAccount(null)
     navigate('/sign-in')
     setIsMenuOpen(false)
+    setIsAccountOpen(false)
   }
 
   const handleCategoryClick = (category) => {
@@ -88,10 +95,47 @@ const Navbar = () => {
                 type="text"
                 placeholder="Search SkyMart"
                 className="flex-1 px-4 py-2 text-black outline-none"
+                value={typeof setSearchByTitle === 'function' ? undefined : undefined}
                 onChange={(e) => setSearchByTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const term = e.target.value.trim()
+                    if (!term) return
+                    // exact, case-insensitive match
+                    const found = items.find(p => p.title?.toLowerCase() === term.toLowerCase())
+                    if (found) {
+                      setProductToShow(found)
+                      openProductDetail()
+                      setIsMenuOpen(false)
+                      return
+                    }
+                    // fallback: perform filtered search
+                    setSearchByTitle(term)
+                    navigate('/')
+                    setIsMenuOpen(false)
+                  }
+                }}
               />
-
-              <button className="bg-[#febd69] px-4 text-black">🔍</button>
+              <button
+                className="bg-[#febd69] px-4 text-black"
+                onClick={() => {
+                  const input = document.querySelector('input[placeholder="Search SkyMart"]')
+                  const term = input?.value.trim() || ''
+                  if (!term) return
+                  const found = items.find(p => p.title?.toLowerCase() === term.toLowerCase())
+                  if (found) {
+                    setProductToShow(found)
+                    openProductDetail()
+                    setIsMenuOpen(false)
+                    return
+                  }
+                  setSearchByTitle(term)
+                  navigate('/')
+                  setIsMenuOpen(false)
+                }}
+              >
+                🔍
+              </button>
             </div>
           </div>
 
@@ -99,15 +143,58 @@ const Navbar = () => {
           <div className="flex items-center gap-6 ml-auto">
 
             {/* ACCOUNT */}
-            <NavLink
-  to="/sign-in"
-  className="hidden md:block hover:outline outline-1 outline-white p-1 rounded"
->
-  <p className="text-xs">
-    Hello, {isUserAuthenticated ? account?.email || "User" : "Sign in"}
-  </p>
-  <p className="font-semibold text-sm">Account & Lists</p>
-</NavLink>
+            {isUserAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsAccountOpen(!isAccountOpen)}
+                  className="hidden md:flex items-center gap-2 hover:outline outline-1 outline-white p-1 rounded"
+                >
+                  <UserCircleIcon className="h-6 w-6" />
+                  <div className="text-left">
+                    <p className="text-xs">Hello, {account?.email?.split('@')[0] || 'User'}</p>
+                    <p className="font-semibold text-sm">Account</p>
+                  </div>
+                </button>
+                
+                {/* Account Dropdown */}
+                {isAccountOpen && (
+                  <div className="absolute top-12 right-0 bg-white text-black rounded shadow-lg w-48 z-50">
+                    <div className="px-4 py-3 border-b">
+                      <p className="text-sm font-semibold">{account?.email}</p>
+                    </div>
+                    <NavLink
+                      to="/my-account"
+                      onClick={() => setIsAccountOpen(false)}
+                      className="block px-4 py-2 hover:bg-gray-100 text-sm"
+                    >
+                      My Account
+                    </NavLink>
+                    <NavLink
+                      to="/my-orders"
+                      onClick={() => setIsAccountOpen(false)}
+                      className="block px-4 py-2 hover:bg-gray-100 text-sm"
+                    >
+                      My Orders
+                    </NavLink>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2 hover:bg-red-50 text-red-600 text-sm border-t"
+                    >
+                      <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <NavLink
+                to="/sign-in"
+                className="hidden md:block hover:outline outline-1 outline-white p-1 rounded"
+              >
+                <p className="text-xs">Hello, Sign in</p>
+                <p className="font-semibold text-sm">Account & Lists</p>
+              </NavLink>
+            )}
 
 
             {/* CART */}

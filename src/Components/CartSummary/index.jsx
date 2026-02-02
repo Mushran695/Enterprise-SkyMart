@@ -1,43 +1,94 @@
-import { useContext } from "react"
+import { useContext, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ChevronLeftIcon, LockClosedIcon } from "@heroicons/react/24/solid"
 import { ShoppingCartContext } from "../../Context"
 import Layout from "../../Components/Layout"
 import { formatINR } from "../../utils"
-import { createOrder } from "../../services/payment"
+import axios from "../../services/axios"
 
 const RAZORPAY_KEY = "rzp_test_SA848OYsod4lAU" // 🔑 Your Razorpay Public Key
 
 const CartSummary = () => {
-  const {
-    cartItems,
-    isUserAuthenticated,
-    user,
-    updateCartQty
-  } = useContext(ShoppingCartContext)
-
+  const { cartItems, isUserAuthenticated, account } = useContext(ShoppingCartContext)
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isUserAuthenticated) {
+      navigate('/sign-in')
+    }
+  }, [isUserAuthenticated, navigate])
 
   const cartTotal = cartItems.reduce(
-    (sum, i) => sum + (i.price || 0) * (i.quantity || 0),
+    (sum, item) => sum + ((item.price || 0) * (item.quantity || 0)),
     0
   )
 
+  // Save cart to backend before payment
+  const syncCartToBackend = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        alert("Please login first")
+        navigate('/sign-in')
+        return false
+      }
+
+      // Add each item from frontend cart to backend
+      for (const item of cartItems) {
+        await axios.post("/cart", {
+          productId: item.product,
+          category: item.category,
+          title: item.title,
+          price: item.price,
+          image: item.image
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      }
+
+      return true
+    } catch (err) {
+      console.error("Failed to sync cart:", err)
+      alert("Failed to sync cart. Please try again.")
+      return false
+    }
+  }
+
+  const createRazorpayOrder = async () => {
+    try {
+      const amount = Math.round(cartTotal)
+      const { data } = await axios.post("/payment/create-order", { amount })
+      return data
+    } catch (err) {
+      console.error("Order creation failed:", err)
+      throw new Error("Failed to create order")
+    }
+  }
+
   const handlePayment = async () => {
-  try {
-    if (cartTotal <= 0) {
-      alert("Your cart is empty")
-      return
-    }
+    try {
+      if (cartTotal <= 0) {
+        alert("Your cart is empty")
+        return
+      }
 
-    if (!window.Razorpay) {
-      alert("Razorpay SDK not loaded. Refresh the page.")
-      return
-    }
+      if (!window.Razorpay) {
+        alert("Razorpay SDK not loaded. Refresh the page.")
+        return
+      }
 
-    const amount = Math.round(cartTotal)   // send rupees only
-    const order = await createOrder(amount)
+      setLoading(true)
 
+      // Step 1: Sync cart to backend
+      const synced = await syncCartToBackend()
+      if (!synced) {
+        setLoading(false)
+        return
+      }
+
+      // Step 2: Create Razorpay order
+      const order = await createRazorpayOrder()
 
       const options = {
         key: RAZORPAY_KEY,
@@ -45,51 +96,39 @@ const CartSummary = () => {
         currency: "INR",
         name: "SkyMart",
         description: "Order Payment",
-        order_id: order.id,
+        order_id: order.orderId,
 
-     handler: async function (response) {
-  try {
-    const payload = {
-      razorpay_order_id: response.razorpay_order_id,
-      razorpay_payment_id: response.razorpay_payment_id,
-      razorpay_signature: response.razorpay_signature,
-    }
+        handler: async function (response) {
+          try {
+            const payload = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }
 
-    // VERIFY PAYMENT & CREATE ORDER IN ONE CALL
-    const verifyRes = await fetch(
-      "http://localhost:5000/api/payment/verify-payment",
-      {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+            // VERIFY PAYMENT & CREATE ORDER IN ONE CALL
+            const verifyRes = await axios.post(
+              "/payment/verify-payment",
+              payload
+            )
+
+            if (!verifyRes.data.success) {
+              alert("Payment verification failed ❌")
+              return
+            }
+
+            alert("Order Placed Successfully 🎉")
+            // Navigate to order confirmation page with the MongoDB order ID
+            navigate(`/order-confirmation/${verifyRes.data.orderId}`)
+          } catch (err) {
+            console.error("Payment error:", err)
+            alert("Payment error: " + (err.response?.data?.message || err.message))
+          }
         },
-        body: JSON.stringify(payload)
-      }
-    )
-
-    const verifyData = await verifyRes.json()
-
-    if (!verifyData.success) {
-      alert("Payment verification failed ❌")
-      return
-    }
-
-    alert("Order Placed Successfully 🎉")
-    // Navigate to order confirmation page with the MongoDB order ID
-    navigate(`/order-confirmation/${verifyData.orderId}`)
-
-  } catch (err) {
-    console.error(err)
-    alert("Payment error: " + err.message)
-  }
-},
-
-
 
         prefill: {
-          name: user?.name || "Customer",
-          email: user?.email || "customer@test.com"
+          name: account?.name || "Customer",
+          email: account?.email || "customer@test.com"
         },
 
         theme: {
@@ -97,12 +136,14 @@ const CartSummary = () => {
         }
       }
 
+      setLoading(false)
       const razor = new window.Razorpay(options)
       razor.open()
 
     } catch (error) {
       console.error(error)
-      alert("Payment Failed")
+      alert("Payment Failed: " + error.message)
+      setLoading(false)
     }
   }
 
@@ -159,23 +200,13 @@ const CartSummary = () => {
                       <p className="font-medium">{item.title}</p>
 
                       <div className="flex items-center gap-2 mt-2">
-                        <button
-                          onClick={() =>
-                            updateCartQty(item.product, item.quantity - 1)
-                          }
-                          className="border px-2 rounded hover:bg-gray-100"
-                        >
+                        <button className="border px-2 rounded hover:bg-gray-100">
                           −
                         </button>
 
                         <span className="font-medium">{item.quantity}</span>
 
-                        <button
-                          onClick={() =>
-                            updateCartQty(item.product, item.quantity + 1)
-                          }
-                          className="border px-2 rounded hover:bg-gray-100"
-                        >
+                        <button className="border px-2 rounded hover:bg-gray-100">
                           +
                         </button>
                       </div>
@@ -210,10 +241,11 @@ const CartSummary = () => {
               {isUserAuthenticated ? (
                 <button
                   onClick={handlePayment}
-                  className="w-full bg-yellow-400 py-2 rounded font-medium hover:bg-yellow-500"
+                  disabled={loading}
+                  className="w-full bg-yellow-400 py-2 rounded font-medium hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <LockClosedIcon className="h-4 w-4 inline mr-2" />
-                  Proceed to Buy
+                  {loading ? "Processing..." : "Proceed to Buy"}
                 </button>
               ) : (
                 <button

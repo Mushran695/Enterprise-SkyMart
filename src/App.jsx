@@ -5,7 +5,8 @@ import Returns from './Pages/Returns'
 import MyOrders from './Pages/MyOrders'
 import MyAccount from './Pages/MyAccount'
 import OrderConfirmation from './Pages/OrderConfirmation'
-import CartSummary from './Pages/cartSummary'
+import OrderTracking from './Pages/OrderTracking'
+import CartSummary from './Components/CartSummary'
 import AdminDashboard from './Pages/Admin/AdminDashboard'
 import Analytics from './Pages/Admin/Analytics'
 import ProtectedRoute from './Components/ProtectedRoute'
@@ -19,6 +20,7 @@ function App() {
       <Route path="/returns" element={<Returns />} />
       <Route path="/my-orders" element={<MyOrders />} />
       <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+      <Route path="/track-order/:orderId" element={<OrderTracking />} />
       <Route path="/my-account" element={<MyAccount />} />
       
       {/* ADMIN ROUTES */}

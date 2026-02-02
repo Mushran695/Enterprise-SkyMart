@@ -108,14 +108,25 @@ export const verifyPayment = async (req, res) => {
         // Calculate total if not present
         let totalAmount = cart.totalAmount
         if (!totalAmount) {
-          totalAmount = cart.items.reduce((sum, item) => sum + (item.price * item.qty), 0)
+          totalAmount = cart.items.reduce((sum, item) => sum + (item.price * (item.quantity || item.qty)), 0)
         }
+
+        // Transform cart items to order products format
+        const orderProducts = cart.items.map(item => ({
+          product: item.product,
+          category: item.category,
+          title: item.title,
+          price: item.price,
+          image: item.image,
+          qty: item.quantity || item.qty  // Transform 'quantity' to 'qty' for order schema
+        }))
 
         // Create order document
         const newOrder = new Order({
           user: userId,
-          items: cart.items,
+          products: orderProducts,
           totalAmount,
+          status: "Pending",
           payment: {
             razorpay_order_id,
             razorpay_payment_id,

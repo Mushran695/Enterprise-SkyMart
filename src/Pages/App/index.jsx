@@ -14,6 +14,8 @@ import Fashion from "../Fashion"
 import Electronics from "../Electronics"
 import Beauty from "../Beauty"
 import Wellness from "../Wellness"
+import OrderConfirmation from "../OrderConfirmation"
+import OrderTracking from "../OrderTracking"
 
 /* ===== COMPONENTS ===== */
 import CheckoutSideMenu from "../../Components/CheckoutSideMenu"
@@ -42,6 +44,8 @@ const AppRoutes = () => {
     { path: "/electronics", element: <Electronics /> },
     { path: "/beauty", element: <Beauty /> },
     { path: "/wellness", element: <Wellness /> },
+    { path: "/order-confirmation/:orderId", element: <OrderConfirmation /> },
+    { path: "/track-order/:orderId", element: <OrderTracking /> },
 
     {
       path: "/my-account",

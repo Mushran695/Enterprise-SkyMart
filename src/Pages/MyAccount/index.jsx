@@ -8,16 +8,19 @@ function MyAccount() {
     const navigate = useNavigate()
 
     const handleSignOut = () => {
-        context.handleSignOut()
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        context.setIsUserAuthenticated(false)
+        context.setAccount(null)
         navigate('/sign-in')
     }
 
-    if (!context.isUserAuthenticated) {
+    if (!context?.isUserAuthenticated) {
         navigate('/sign-in')
         return null
     }
 
-    if (context.isLoading) {
+    if (context?.isLoading) {
         return (
             <Layout>
                 <div className="animate-pulse p-8">
@@ -35,48 +38,41 @@ function MyAccount() {
     return (
         <Layout>
             <div className="max-w-2xl mx-auto p-8">
-                <h1 className="text-2xl font-bold mb-6">My Account</h1>
+                <h1 className="text-3xl font-bold mb-8">My Account</h1>
+                
                 <div className="bg-white shadow rounded-lg p-6 mb-6">
                     <h2 className="text-xl font-semibold mb-4">Profile Information</h2>
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-600">Name</label>
-                            <p className="mt-1 text-gray-900">{context.account?.name || 'Not provided'}</p>
+                            <p className="mt-1 text-gray-900">{context?.account?.name || context?.account?.email?.split('@')[0] || 'Not provided'}</p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600">Email</label>
-                            <p className="mt-1 text-gray-900">{context.account?.email || 'Not provided'}</p>
+                            <p className="mt-1 text-gray-900">{context?.account?.email || 'Not provided'}</p>
                         </div>
+                        {context?.account?.role && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600">Account Type</label>
+                                <p className="mt-1 text-gray-900 capitalize">{context?.account?.role}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
+
                 <div className="bg-white shadow rounded-lg p-6 mb-6">
-                    <h2 className="text-xl font-semibold mb-4">Order History</h2>
-                    {context.order.length > 0 ? (
-                        <div className="space-y-4">
-                            {context.order.map((order, index) => (
-                                <div key={index} className="border rounded-lg p-4">
-                                    <div className="flex justify-between mb-2">
-                                        <span className="font-medium">Order Date:</span>
-                                        <span>{order.date}</span>
-                                    </div>
-                                    <div className="flex justify-between mb-2">
-                                        <span className="font-medium">Total Products:</span>
-                                        <span>{order.totalProducts}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="font-medium">Total Amount:</span>
-                                        <span>${order.totalPrice}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500">No orders yet</p>
-                    )}
+                    <h2 className="text-xl font-semibold mb-4">Quick Links</h2>
+                    <button
+                        onClick={() => navigate('/my-orders')}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-50 text-blue-600 transition-colors"
+                    >
+                        → View Your Orders
+                    </button>
                 </div>
+
                 <button
                     onClick={handleSignOut}
-                    className="w-full bg-black text-white rounded-lg py-2 px-4 hover:bg-gray-800 transition-colors"
+                    className="w-full bg-red-600 text-white rounded-lg py-2 px-4 hover:bg-red-700 transition-colors font-semibold"
                 >
                     Sign Out
                 </button>
