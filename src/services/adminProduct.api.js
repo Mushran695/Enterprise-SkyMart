@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api/admin",
+  baseURL: "https://mern-ecommerce-1-mpg2.onrender.com/api/admin",
   headers: {
     Authorization: `Bearer ${localStorage.getItem("token")}`
   }

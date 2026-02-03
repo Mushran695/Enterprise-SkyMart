@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = "http://localhost:5000/api/products"
+const API_URL = "https://mern-ecommerce-1-mpg2.onrender.com/api/products"
 
 /* =========================
    AXIOS INSTANCE

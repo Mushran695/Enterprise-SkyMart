@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API = "http://localhost:5000/api/analytics"
+const API = "https://mern-ecommerce-1-mpg2.onrender.com/api/analytics"
 
 const auth = () => ({
   headers: {

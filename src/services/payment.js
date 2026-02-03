@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const BASE_URL = "http://localhost:5000/api/payment/create-order"
+const BASE_URL = "https://mern-ecommerce-1-mpg2.onrender.com/api/payment/create-order"
 
 export const createOrder = async (amount) => {
   try {
