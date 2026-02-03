@@ -30,7 +30,8 @@ export const placeOrder = async (req, res) => {
     const order = await Order.create({
       user: userId,
       products,
-      totalAmount: cart.totalPrice,
+      // cart model uses `totalAmount` (not totalPrice)
+      totalAmount: cart.totalAmount || 0,
       payment: {
         razorpay_order_id,
         razorpay_payment_id,
@@ -40,7 +41,7 @@ export const placeOrder = async (req, res) => {
 
     // Clear cart after order
     cart.items = []
-    cart.totalPrice = 0
+    cart.totalAmount = 0
     await cart.save()
 
     res.status(201).json({

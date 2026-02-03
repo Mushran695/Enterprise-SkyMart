@@ -2,6 +2,7 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import connectDB from "./config/db.js"
+import mongoose from "mongoose"
 
 import authRoutes from "./routes/auth.js"
 import productRoutes from "./routes/product.routes.js"
@@ -12,10 +13,20 @@ import analyticsRoutes from "./routes/analytics.routes.js"
 import adminRoutes from "./routes/admin.routes.js"
 
 dotenv.config()
+// Warn if critical env vars are missing (helps debugging on Render)
+if (!process.env.MONGO_URI && !process.env.MONGODB_URI) {
+  console.warn("Warning: MONGO_URI or MONGODB_URI is not set. Database connection will fail until set.")
+}
+if (!process.env.JWT_SECRET) {
+  console.warn("Warning: JWT_SECRET is not set. Authentication will fail until set.")
+}
+
 connectDB()
 
 const app = express()
-app.use(cors())
+// Allow configuring allowed origin via env (set to your Vercel URL in Render)
+const allowedOrigin = process.env.ALLOWED_ORIGIN || "*"
+app.use(cors({ origin: allowedOrigin }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 // Auth
@@ -40,6 +51,12 @@ app.use("/api/admin", adminRoutes)
 
 app.get("/", (req, res) => {
   res.send("API running")
+})
+
+// Health/status endpoint to check DB connection from CI or frontend
+app.get("/api/status", (req, res) => {
+  const state = mongoose.connection.readyState // 0 = disconnected, 1 = connected
+  res.json({ ok: state === 1, mongoReadyState: state })
 })
 
 app.listen(process.env.PORT || 5000, () => {
