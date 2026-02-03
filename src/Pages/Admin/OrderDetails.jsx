@@ -12,7 +12,7 @@ const OrderDetails = () => {
   }, [id])
 
   const fetchOrder = async () => {
-    const res = await fetch(`http://localhost:5000/api/orders/admin/${id}`, {
+    const res = await fetch(`https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin/${id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`
       }
@@ -26,7 +26,7 @@ const OrderDetails = () => {
 
   const updateStatus = async (value) => {
     setStatus(value)
-    await fetch(`http://localhost:5000/api/orders/admin/${id}`, {
+    await fetch(`https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

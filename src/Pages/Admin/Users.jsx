@@ -18,7 +18,7 @@ const Users = () => {
   // 🔥 Fetch users from MongoDB
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/users", {
+      const res = await axios.get("https://mern-ecommerce-1-mpg2.onrender.com/api/admin/users", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -40,7 +40,7 @@ const Users = () => {
   const updateRole = async (id, role) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/admin/users/${id}/role`,
+        `https://mern-ecommerce-1-mpg2.onrender.com/api/admin/users/${id}/role`,
         { role },
         {
           headers: {
@@ -63,7 +63,7 @@ const Users = () => {
   const updateStatus = async (id, status) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/admin/users/${id}/status`,
+        `https://mern-ecommerce-1-mpg2.onrender.com/api/admin/users/${id}/status`,
         { status },
         {
           headers: {

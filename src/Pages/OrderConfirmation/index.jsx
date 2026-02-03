@@ -21,7 +21,7 @@ const OrderConfirmation = () => {
         }
 
         const response = await fetch(
-          `http://localhost:5000/api/orders/${orderId}`,
+          `https://mern-ecommerce-1-mpg2.onrender.com/api/orders/${orderId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`

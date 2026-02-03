@@ -29,7 +29,7 @@ function SignUp() {
       setLoading(true)
 
       const { data } = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "https://mern-ecommerce-1-mpg2.onrender.com/api/auth/register",
         {
           name: formData.name,
           email: formData.email,

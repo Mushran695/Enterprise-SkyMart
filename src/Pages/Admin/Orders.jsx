@@ -15,7 +15,7 @@ const Orders = () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("http://localhost:5000/api/orders/admin", {
+      const res = await fetch("https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -49,7 +49,7 @@ const Orders = () => {
   }
 
   const updateStatus = async (id, newStatus) => {
-    await fetch(`http://localhost:5000/api/orders/admin/${id}`, {
+    await fetch(`https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

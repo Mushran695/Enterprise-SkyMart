@@ -5,7 +5,7 @@ const Orders = () => {
   const [orders, setOrders] = useState([])
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/orders/my", {
+    fetch("https://mern-ecommerce-1-mpg2.onrender.com/api/orders/my", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`
       }
