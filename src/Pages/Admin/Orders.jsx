@@ -21,8 +21,12 @@ const Orders = () => {
           Authorization: `Bearer ${localStorage.getItem("token")}`
         }
       })
-      if (!res.ok) throw new Error(`Error: ${res.status}`)
-      const data = await res.json()
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        const serverMsg = data?.message || data?.error || `Status ${res.status}`
+        console.error('[Admin Orders] Error response:', data)
+        throw new Error(serverMsg)
+      }
       console.log("[Admin Orders] Response:", data)
       if (!Array.isArray(data)) throw new Error("Invalid response from server")
       const formatted = data.map(o => ({
@@ -34,8 +38,28 @@ const Orders = () => {
       }))
       setOrders(formatted)
     } catch (err) {
-      setError(err.message || "Failed to fetch orders")
-      setOrders([])
+        console.error("[Admin Orders] Primary fetch failed:", err)
+        // Try lightweight fallback endpoint
+        try {
+          const fallbackRes = await fetch(`${API_BASE}/admin/orders-simple`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          })
+          const fallbackData = await fallbackRes.json().catch(() => null)
+          if (!fallbackRes.ok) throw new Error(fallbackData?.message || `Status ${fallbackRes.status}`)
+          const formatted = fallbackData.map(o => ({
+            id: o._id || o._id, // aggregation returns _id or not
+            user: o.user?.email || "Guest",
+            total: o.totalAmount,
+            status: capitalize(o.status),
+            date: new Date(o.createdAt).toISOString().split("T")[0]
+          }))
+          setOrders(formatted)
+          setError(null)
+        } catch (fallbackErr) {
+          console.error("[Admin Orders] Fallback fetch failed:", fallbackErr)
+          setError(fallbackErr.message || "Failed to fetch orders")
+          setOrders([])
+        }
     } finally {
       setLoading(false)
     }

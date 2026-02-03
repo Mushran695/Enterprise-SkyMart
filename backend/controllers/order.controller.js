@@ -67,22 +67,23 @@ export const getMyOrders = async (req, res) => {
 // ==========================
 export const getAllOrdersAdmin = async (req, res) => {
   try {
-    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 })
+    // use lean() to return plain objects and avoid hydration issues
+    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 }).lean()
     res.json(orders)
   } catch (error) {
-    console.error('Failed to fetch all orders (admin):', error)
-    res.status(500).json({ message: 'Failed to fetch orders' })
+    console.error('Failed to fetch all orders (admin):', error.stack || error)
+    res.status(500).json({ message: 'Failed to fetch orders', error: error.message })
   }
 }
 
 export const getOrderByIdAdmin = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email')
+    const order = await Order.findById(req.params.id).populate('user', 'name email').lean()
     if (!order) return res.status(404).json({ message: 'Order not found' })
     res.json(order)
   } catch (error) {
-    console.error('Failed to fetch order by id (admin):', error)
-    res.status(500).json({ message: 'Failed to fetch order' })
+    console.error('Failed to fetch order by id (admin):', error.stack || error)
+    res.status(500).json({ message: 'Failed to fetch order', error: error.message })
   }
 }
 
@@ -95,7 +96,7 @@ export const updateOrderStatusAdmin = async (req, res) => {
     await order.save()
     res.json(order)
   } catch (error) {
-    console.error('Failed to update order status (admin):', error)
-    res.status(500).json({ message: 'Failed to update order' })
+    console.error('Failed to update order status (admin):', error.stack || error)
+    res.status(500).json({ message: 'Failed to update order', error: error.message })
   }
 }

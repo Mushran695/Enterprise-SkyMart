@@ -1,6 +1,7 @@
 import express from "express"
 import User from "../models/User.js"
 import Product from "../models/Product.js"
+import Order from "../models/order.model.js"
 import { protect } from "../middleware/auth.middleware.js"
 import { adminOnly } from "../middleware/admin.middleware.js"
 import { getDashboardStats } from "../controllers/analytics.controller.js"
@@ -67,4 +68,36 @@ router.delete("/products/:id", protect, adminOnly, async (req, res) => {
   }
 })
 
+// Lightweight admin orders endpoint (fast, returns minimal fields + user email)
+router.get("/orders-simple", protect, adminOnly, async (req, res) => {
+  try {
+    const orders = await Order.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          totalAmount: 1,
+          status: 1,
+          createdAt: 1,
+          "user.email": 1
+        }
+      }
+    ])
+
+    res.json(orders)
+  } catch (error) {
+    console.error("Failed to fetch simple orders (admin):", error)
+    res.status(500).json({ message: "Failed to fetch orders (simple)", error: error.message })
+  }
+})
+
 export default router
+
