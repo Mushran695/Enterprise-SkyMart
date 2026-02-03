@@ -1,4 +1,5 @@
 import axios from "axios"
+import { API_BASE } from "./baseUrl"
 
 export const adminLogin = (data) =>
-  axios.post("https://mern-ecommerce-1-mpg2.onrender.com/api/auth/login", data)
+  axios.post(`${API_BASE}/auth/login`, data)

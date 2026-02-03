@@ -1,7 +1,8 @@
 import axios from "axios"
+import { API_BASE } from "../services/baseUrl"
 
 const api = axios.create({
-  baseURL: "https://mern-ecommerce-1-mpg2.onrender.com/api",
+  baseURL: API_BASE,
 })
 
 // Attach token automatically

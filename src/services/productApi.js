@@ -1,12 +1,11 @@
 import axios from "axios"
-
-const API_URL = "https://mern-ecommerce-1-mpg2.onrender.com/api/products"
+import { API_BASE } from "./baseUrl"
 
 /* =========================
    AXIOS INSTANCE
 ========================= */
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_BASE}/products`,
 })
 
 /* =========================

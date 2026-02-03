@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { API_BASE } from '../../services/baseUrl'
 import { CheckCircleIcon, TruckIcon, ClockIcon, ShoppingBagIcon } from '@heroicons/react/24/solid'
 import Layout from '../../Components/Layout'
 import { formatINR } from '../../utils'
@@ -21,7 +22,7 @@ const OrderConfirmation = () => {
         }
 
         const response = await fetch(
-          `https://mern-ecommerce-1-mpg2.onrender.com/api/orders/${orderId}`,
+          `${API_BASE}/orders/${orderId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`

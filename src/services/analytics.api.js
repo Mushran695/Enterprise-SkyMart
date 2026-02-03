@@ -1,6 +1,7 @@
 import axios from "axios"
+import { API_BASE } from "./baseUrl"
 
-const API = "https://mern-ecommerce-1-mpg2.onrender.com/api/analytics"
+const API = `${API_BASE}/analytics`
 
 const auth = () => ({
   headers: {

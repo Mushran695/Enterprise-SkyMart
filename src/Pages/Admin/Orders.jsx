@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
+import { API_BASE } from "../../services/baseUrl"
 
 const Orders = () => {
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ const Orders = () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin", {
+      const res = await fetch(`${API_BASE}/orders/admin`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -49,13 +50,14 @@ const Orders = () => {
   }
 
   const updateStatus = async (id, newStatus) => {
-    await fetch(`https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin/${id}`, {
+    await fetch(`${API_BASE}/orders/admin/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${localStorage.getItem("token")}`
       },
-      body: JSON.stringify({ status: newStatus.toLowerCase() })
+      // send status exactly as selected to match backend enum (case-sensitive)
+      body: JSON.stringify({ status: newStatus })
     })
 
     setOrders(prev =>

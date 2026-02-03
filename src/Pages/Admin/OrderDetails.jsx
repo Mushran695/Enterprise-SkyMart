@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
+import { API_BASE } from "../../services/baseUrl"
 
 const OrderDetails = () => {
   const { id } = useParams()
@@ -12,7 +13,7 @@ const OrderDetails = () => {
   }, [id])
 
   const fetchOrder = async () => {
-    const res = await fetch(`https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin/${id}`, {
+    const res = await fetch(`${API_BASE}/orders/admin/${id}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`
       }
@@ -26,7 +27,7 @@ const OrderDetails = () => {
 
   const updateStatus = async (value) => {
     setStatus(value)
-    await fetch(`https://mern-ecommerce-1-mpg2.onrender.com/api/orders/admin/${id}`, {
+    await fetch(`${API_BASE}/orders/admin/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

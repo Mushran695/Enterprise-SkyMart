@@ -1,5 +1,7 @@
-const PRODUCT_API = "https://mern-ecommerce-1-mpg2.onrender.com/api/products"
-const ADMIN_API = "https://mern-ecommerce-1-mpg2.onrender.com/api/admin"
+import { API_BASE } from "./baseUrl"
+
+const PRODUCT_API = `${API_BASE}/products`
+const ADMIN_API = `${API_BASE}/admin`
 
 const authHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -49,7 +51,7 @@ export const deleteProduct = async id => {
    ADMIN ANALYTICS
 ================================ */
 
-const ANALYTICS_API = "https://mern-ecommerce-1-mpg2.onrender.com/api/analytics"
+const ANALYTICS_API = `${API_BASE}/analytics`
 
 /* FETCH ALL ANALYTICS DATA */
 export const getAdminAnalytics = async () => {

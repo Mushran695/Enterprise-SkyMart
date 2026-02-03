@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { API_BASE } from "../../services/baseUrl"
 
 const roleStyles = {
   admin: "bg-purple-100 text-purple-700",
@@ -18,7 +19,7 @@ const Users = () => {
   // 🔥 Fetch users from MongoDB
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("https://mern-ecommerce-1-mpg2.onrender.com/api/admin/users", {
+      const res = await axios.get(`${API_BASE}/admin/users`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -40,7 +41,7 @@ const Users = () => {
   const updateRole = async (id, role) => {
     try {
       await axios.put(
-        `https://mern-ecommerce-1-mpg2.onrender.com/api/admin/users/${id}/role`,
+        `${API_BASE}/admin/users/${id}/role`,
         { role },
         {
           headers: {
@@ -63,7 +64,7 @@ const Users = () => {
   const updateStatus = async (id, status) => {
     try {
       await axios.put(
-        `https://mern-ecommerce-1-mpg2.onrender.com/api/admin/users/${id}/status`,
+        `${API_BASE}/admin/users/${id}/status`,
         { status },
         {
           headers: {

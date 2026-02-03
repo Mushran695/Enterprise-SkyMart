@@ -1,6 +1,7 @@
 import axios from "axios"
+import { API_BASE } from "./baseUrl"
 
-const BASE_URL = "https://mern-ecommerce-1-mpg2.onrender.com/api/payment/create-order"
+const BASE_URL = `${API_BASE}/payment/create-order`
 
 export const createOrder = async (amount) => {
   try {

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import axios from "axios"
+import { API_BASE } from "../../services/baseUrl"
 import Layout from "../../Components/Layout"
 
 function SignUp() {
@@ -29,7 +30,7 @@ function SignUp() {
       setLoading(true)
 
       const { data } = await axios.post(
-        "https://mern-ecommerce-1-mpg2.onrender.com/api/auth/register",
+        `${API_BASE}/auth/register`,
         {
           name: formData.name,
           email: formData.email,

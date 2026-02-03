@@ -1,7 +1,16 @@
 import axios from "axios"
 
+// Use Vite env variable when deployed on Vercel, fallback to known Render URL for backwards compatibility
+const API_BASE = import.meta.env.VITE_API_URL || "https://mern-ecommerce-1-mpg2.onrender.com/api"
+
+// Log the resolved API base at runtime to help debug deployed bundles
+if (typeof window !== "undefined") {
+  // eslint-disable-next-line no-console
+  console.info("API base:", API_BASE)
+}
+
 const instance = axios.create({
-  baseURL: "https://mern-ecommerce-1-mpg2.onrender.com/api",
+  baseURL: API_BASE,
   headers: {
     "Content-Type": "application/json"
   }
