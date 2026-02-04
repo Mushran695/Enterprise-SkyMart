@@ -26,7 +26,17 @@ connectDB()
 const app = express()
 // Allow configuring allowed origin via env (set to your Vercel URL in Render)
 const allowedOrigin = process.env.ALLOWED_ORIGIN || "*"
-app.use(cors({ origin: allowedOrigin }))
+// Log the configured allowed origin so deployed logs show the CORS setting
+console.info("Configured ALLOWED_ORIGIN:", allowedOrigin)
+// Use explicit CORS options and allow Authorization header for protected routes
+app.use(
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 // Auth
