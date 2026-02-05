@@ -3,6 +3,7 @@ import cors from "cors"
 import dotenv from "dotenv"
 import connectDB from "./config/db.js"
 import mongoose from "mongoose"
+import serverless from "serverless-http"
 
 import authRoutes from "./routes/auth.js"
 import productRoutes from "./routes/product.routes.js"
@@ -21,7 +22,8 @@ if (!process.env.JWT_SECRET) {
   console.warn("Warning: JWT_SECRET is not set. Authentication will fail until set.")
 }
 
-connectDB()
+// Do NOT connect at module import time for serverless deployments.
+// For local development we will connect before starting the listener below.
 
 const app = express()
 // Allow configuring allowed origin via env (set to your Vercel URL in Render)
@@ -69,6 +71,37 @@ app.get("/api/status", (req, res) => {
   res.json({ ok: state === 1, mongoReadyState: state })
 })
 
-app.listen(process.env.PORT || 5000, () => {
-  console.log("Server running on http://localhost:5000")
-})
+const PORT = process.env.PORT || 5000
+
+if (process.env.VERCEL || process.env.NODE_ENV === "production") {
+  // In serverless deployments Vercel will use the exported handler below.
+  console.log("Running in production/serverless mode; export handler available")
+} else {
+  // Local/dev: connect to DB then start the server (fail fast for dev)
+  connectDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`)
+      })
+    })
+    .catch((err) => {
+      console.error("Failed to connect DB for local dev:", err)
+      process.exit(1)
+    })
+}
+
+const lambdaHandler = serverless(app)
+export const handler = async (event, context) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB()
+    }
+    return await lambdaHandler(event, context)
+  } catch (err) {
+    console.error("Serverless handler error:", err)
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ ok: false, error: "Database connection failed" }),
+    }
+  }
+}
