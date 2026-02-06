@@ -1,33 +1,19 @@
+import { useEffect, useState } from "react"
 import {
   ShoppingBagIcon,
   ClipboardDocumentListIcon,
   UsersIcon,
   CurrencyRupeeIcon,
 } from "@heroicons/react/24/outline"
+import { getAdminStats } from "../../services/analytics.api"
 
-/* -------------------- DATA -------------------- */
-const stats = [
-  {
-    title: "Total Products",
-    value: 128,
-    icon: ShoppingBagIcon,
-  },
-  {
-    title: "Total Orders",
-    value: 542,
-    icon: ClipboardDocumentListIcon,
-  },
-  {
-    title: "Total Users",
-    value: 312,
-    icon: UsersIcon,
-  },
-  {
-    title: "Revenue",
-    value: "₹1,24,500",
-    icon: CurrencyRupeeIcon,
-  },
-]
+/* -------------------- DATA (dynamic) -------------------- */
+const initialStats = {
+  products: 0,
+  orders: 0,
+  users: 0,
+  revenue: 0,
+}
 
 /* -------------------- COMPONENTS -------------------- */
 const StatCard = ({ title, value, icon: Icon }) => {
@@ -49,6 +35,29 @@ const StatCard = ({ title, value, icon: Icon }) => {
 
 /* -------------------- DASHBOARD -------------------- */
 const Dashboard = () => {
+  const [stats, setStats] = useState(initialStats)
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const data = await getAdminStats()
+        if (!mounted) return
+        // backend returns { revenue, orders, users, conversion, products }
+        setStats({
+          products: data.products || data.productCount || 0,
+          orders: data.orders || data.totalOrders || 0,
+          users: data.users || 0,
+          revenue: data.revenue || data.totalRevenue || 0,
+        })
+      } catch (err) {
+        console.error("Failed to load dashboard stats:", err)
+      }
+    }
+
+    load()
+    return () => { mounted = false }
+  }, [])
   return (
     <div className="space-y-8">
       {/* PAGE HEADER */}
@@ -63,14 +72,10 @@ const Dashboard = () => {
 
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((item, index) => (
-          <StatCard
-            key={index}
-            title={item.title}
-            value={item.value}
-            icon={item.icon}
-          />
-        ))}
+        <StatCard title="Total Products" value={stats.products} icon={ShoppingBagIcon} />
+        <StatCard title="Total Orders" value={stats.orders} icon={ClipboardDocumentListIcon} />
+        <StatCard title="Total Users" value={stats.users} icon={UsersIcon} />
+        <StatCard title="Revenue" value={`₹${Number(stats.revenue).toLocaleString("en-IN")}`} icon={CurrencyRupeeIcon} />
       </div>
 
       {/* EXTRA SECTIONS */}

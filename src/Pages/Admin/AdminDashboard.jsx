@@ -25,13 +25,33 @@ const AdminDashboard = () => {
       setError(null)
       console.log("🔄 Loading analytics data...")
       
-      // use analytics.api helpers (axios-based) to keep connection consistent
-      const [statsRes, ordersRes, revenueRes, categoriesRes] = await Promise.all([
-        fetchStats(),
-        fetchOrders(),
-        fetchRevenue(),
-        fetchCategories(),
-      ])
+      // In development, call local backend directly to avoid hitting the deployed API (which may not have admin analytics)
+      const isDev = import.meta.env && import.meta.env.DEV
+      let statsRes, ordersRes, revenueRes, categoriesRes
+
+      if (isDev) {
+        const token = localStorage.getItem("token")
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+        const [s, o, r, c] = await Promise.all([
+          fetch("http://localhost:5000/api/analytics/stats", { headers }).then(res => res.json()),
+          fetch("http://localhost:5000/api/analytics/orders", { headers }).then(res => res.json()),
+          fetch("http://localhost:5000/api/analytics/revenue", { headers }).then(res => res.json()),
+          fetch("http://localhost:5000/api/analytics/categories", { headers }).then(res => res.json()),
+        ])
+        statsRes = s
+        ordersRes = o
+        revenueRes = r
+        categoriesRes = c
+      } else {
+        // production / deployed behavior: use existing analytics helpers
+        ;[statsRes, ordersRes, revenueRes, categoriesRes] = await Promise.all([
+          fetchStats(),
+          fetchOrders(),
+          fetchRevenue(),
+          fetchCategories(),
+        ])
+      }
 
       console.log("✅ Analytics data received:", { statsRes, ordersRes, revenueRes, categoriesRes })
 
