@@ -34,17 +34,31 @@ const CartSummary = () => {
         return false
       }
 
-      // Add each item from frontend cart to backend
+      // Sync each item: try to set exact quantity via update endpoint first
       for (const item of cartItems) {
-        await axios.post("/cart", {
-          productId: item.product,
-          category: item.category,
-          title: item.title,
-          price: item.price,
-          image: item.image
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        try {
+          await axios.put("/cart/update", {
+            productId: item.product,
+            qty: item.quantity || item.qty || 1
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        } catch (err) {
+          // If item not found on server, fallback to add (POST)
+          if (err.response && err.response.status === 404) {
+            await axios.post("/cart", {
+              productId: item.product,
+              category: item.category,
+              title: item.title,
+              price: item.price,
+              image: item.image
+            }, {
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          } else {
+            throw err
+          }
+        }
       }
 
       return true
