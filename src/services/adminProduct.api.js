@@ -1,7 +1,16 @@
 import axios from "axios"
 
-// Resolve API base: prefer Vite env, in dev use local backend, otherwise use deployed URL
-const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:5000/api" : "https://mern-ecommerce-1-mpg2.onrender.com/api")
+// Resolve API base: prefer Vite env; if running in browser on localhost use local backend; otherwise use deployed URL
+let API_BASE
+if (import.meta.env.VITE_API_URL) {
+  API_BASE = import.meta.env.VITE_API_URL
+} else if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  API_BASE = 'http://localhost:5000/api'
+} else if (import.meta.env.DEV) {
+  API_BASE = 'http://localhost:5000/api'
+} else {
+  API_BASE = 'https://mern-ecommerce-1-mpg2.onrender.com/api'
+}
 const API_URL = `${API_BASE}/admin`
 
 const authHeaders = () => ({
