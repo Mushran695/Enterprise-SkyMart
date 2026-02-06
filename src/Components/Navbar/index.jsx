@@ -29,6 +29,10 @@ const Navbar = () => {
     setAccount = () => {},
   } = useContext(ShoppingCartContext) || {}
 
+  // Fallback to localStorage token for mobile / stale-context cases
+  const tokenFromStorage = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+  const isAuthenticated = isUserAuthenticated || !!tokenFromStorage
+
   // ✅ MongoDB-safe cart count (uses quantity)
   const cartCount = Array.isArray(cartItems)
     ? cartItems.reduce((sum, item) => sum + (item.qty || 1), 0)
@@ -143,7 +147,7 @@ const Navbar = () => {
           <div className="flex items-center gap-6 ml-auto">
 
             {/* ACCOUNT */}
-            {isUserAuthenticated ? (
+            {isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setIsAccountOpen(!isAccountOpen)}
@@ -199,7 +203,15 @@ const Navbar = () => {
 
             {/* CART */}
             <button
-              onClick={openCheckoutSideMenu}
+              onClick={() => {
+                // Ensure auth before opening cart to avoid 401-driven redirect
+                if (!isAuthenticated) {
+                  navigate('/sign-in')
+                  setIsMenuOpen(false)
+                  return
+                }
+                openCheckoutSideMenu()
+              }}
               className="relative flex items-end gap-1 hover:outline outline-1 outline-white p-1 rounded"
             >
               <ShoppingCartIcon className="h-7 w-7" />
@@ -257,11 +269,15 @@ const Navbar = () => {
             <li className="px-4 py-2" onClick={() => handleCategoryClick('Wellness')}>Wellness</li>
           </ul>
 
-          {isUserAuthenticated && (
+          {(isAuthenticated) ? (
             <div className="border-t px-4 py-4">
               <button onClick={handleLogout} className="text-red-600">
                 Sign Out
               </button>
+            </div>
+          ) : (
+            <div className="border-t px-4 py-4">
+              <NavLink to="/sign-in" onClick={() => setIsMenuOpen(false)} className="text-black">Sign in</NavLink>
             </div>
           )}
         </div>
