@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react"
-import { getAdminAnalytics } from "../../services/adminApi"
+import { getAllUsers } from "../../services/adminApi"
+import {
+  getAdminStats as fetchStats,
+  getOrderStats as fetchOrders,
+  getRevenueStats as fetchRevenue,
+  getCategoryStats as fetchCategories,
+} from "../../services/analytics.api"
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null)
@@ -19,13 +25,39 @@ const AdminDashboard = () => {
       setError(null)
       console.log("🔄 Loading analytics data...")
       
-      const data = await getAdminAnalytics()
-      console.log("✅ Analytics data received:", data)
-      
-      setStats(data.stats || {})
-      setOrders(data.orders || [])
-      setRevenue(data.revenue || [])
-      setCategories(data.categories || [])
+      // use analytics.api helpers (axios-based) to keep connection consistent
+      const [statsRes, ordersRes, revenueRes, categoriesRes] = await Promise.all([
+        fetchStats(),
+        fetchOrders(),
+        fetchRevenue(),
+        fetchCategories(),
+      ])
+
+      console.log("✅ Analytics data received:", { statsRes, ordersRes, revenueRes, categoriesRes })
+
+      // fetch users separately to get user count
+      let users = []
+      try {
+        users = await getAllUsers()
+        console.log("✅ Users fetched:", users.length)
+      } catch (uErr) {
+        console.warn("⚠️ Failed to fetch users for dashboard:", uErr)
+      }
+
+      // normalize stats shape (support different backend field names)
+      const src = statsRes || {}
+      const normalized = {
+        totalProducts: src.totalProducts || src.products || src.productCount || src.productsCount || 0,
+        totalOrders: src.totalOrders || src.orders || src.orderCount || src.ordersCount || 0,
+        totalRevenue: src.totalRevenue || src.revenue || src.total || src.totalRevenue || 0,
+        users: Array.isArray(users) ? users.length : (src.users || src.userCount || 0),
+        conversion: src.conversion || 0,
+      }
+
+      setStats(normalized)
+      setOrders(ordersRes || [])
+      setRevenue(revenueRes || [])
+      setCategories(categoriesRes || [])
     } catch (err) {
       console.error("❌ Failed to load admin dashboard:", err)
       setError(err.message || "Failed to load analytics data")
@@ -57,10 +89,10 @@ const AdminDashboard = () => {
 
       {/* STATS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Revenue" value={`₹${stats?.revenue || 0}`} />
-        <StatCard title="Total Orders" value={stats?.orders || 0} />
+        <StatCard title="Total Products" value={stats?.totalProducts || 0} />
+        <StatCard title="Total Orders" value={stats?.totalOrders || 0} />
         <StatCard title="Total Users" value={stats?.users || 0} />
-        <StatCard title="Conversion Rate" value={`${stats?.conversion || 0}%`} />
+        <StatCard title="Revenue" value={`₹${stats?.totalRevenue || 0}`} />
       </div>
 
       {/* CATEGORIES */}
