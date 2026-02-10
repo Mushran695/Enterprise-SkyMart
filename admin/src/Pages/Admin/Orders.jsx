@@ -122,7 +122,7 @@ const Orders = () => {
                     <td className="p-3">{order.date}</td>
                     <td className="p-3 flex gap-2">
                       <button
-                        onClick={() => navigate(`/admin/orders/${order.id}`)}
+                        onClick={() => navigate(`/orders/${order.id}`)}
                         className="px-3 py-1 bg-blue-600 text-white rounded"
                       >
                         View

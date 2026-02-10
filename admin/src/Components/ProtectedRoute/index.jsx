@@ -1,19 +1,18 @@
-import { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { ShoppingCartContext } from '../../Context';
+import { Navigate } from "react-router-dom"
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { isUserAuthenticated, account } = useContext(ShoppingCartContext);
+  const token = localStorage.getItem("token")
+  const user = JSON.parse(localStorage.getItem("user") || "{}")
 
-  if (!isUserAuthenticated) {
-    return <Navigate to="/sign-in" replace />;
+  if (!token) {
+    return <Navigate to="/" replace />
   }
 
-  if (requireAdmin && account?.role !== 'admin') {
-    return <Navigate to="/" replace />;
+  if (requireAdmin && user.role !== "admin") {
+    return <Navigate to="/" replace />
   }
 
-  return children;
-};
+  return children
+}
 
-export default ProtectedRoute;
+export default ProtectedRoute

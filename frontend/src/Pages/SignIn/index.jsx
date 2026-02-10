@@ -34,7 +34,7 @@ const SignIn = () => {
 
       // Redirect by role
       if (user.role === "admin") {
-        navigate("/admin", { replace: true })
+        navigate("/", { replace: true })
       } else {
         navigate("/", { replace: true })
       }

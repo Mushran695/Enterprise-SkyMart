@@ -23,14 +23,14 @@ import ProtectedRoute from "../../Components/ProtectedRoute"
 import CartSummary from "../../Components/CartSummary"
 
 /* ===== ADMIN ===== */
-import AdminLayout from "../../Components/Admin/AdminLayout"
-import Dashboard from "../Admin/Dashboard"
-import Products from "../Admin/Products"
-import Orders from "../Admin/Orders"
-import Users from "../Admin/Users"
-import Analytics from "../Admin/Analytics"
-import OrderDetails from "../Admin/OrderDetails"
-import AdminProtectedRoute from "../../Components/Admin/AdminProtectedRoute"
+// import AdminLayout from "../../Components/Admin/AdminLayout"
+// import Dashboard from "../Admin/Dashboard"
+// import Products from "../Admin/Products"
+// import Orders from "../Admin/Orders"
+// import Users from "../Admin/Users"
+// import Analytics from "../Admin/Analytics"
+// import OrderDetails from "../Admin/OrderDetails"
+// import AdminProtectedRoute from "../../Components/Admin/AdminProtectedRoute"
 
 import "./App.css"
 
@@ -75,23 +75,23 @@ const AppRoutes = () => {
     { path: "/sign-in", element: <SignIn /> },
     { path: "/sign-up", element: <SignUp /> },
 
-    {
-      path: "/admin",
-      element: <AdminProtectedRoute />,
-      children: [
-        {
-          element: <AdminLayout />,
-          children: [
-            { index: true, element: <Dashboard /> },
-            { path: "products", element: <Products /> },
-            { path: "orders", element: <Orders /> },
-            { path: "orders/:id", element: <OrderDetails /> },
-            { path: "users", element: <Users /> },
-            { path: "analytics", element: <Analytics /> },
-          ],
-        },
-      ],
-    },
+    // {
+    //   path: "/admin",
+    //   element: <AdminProtectedRoute />,
+    //   children: [
+    //     {
+    //       element: <AdminLayout />,
+    //       children: [
+    //         { index: true, element: <Dashboard /> },
+    //         { path: "products", element: <Products /> },
+    //         { path: "orders", element: <Orders /> },
+    //         { path: "orders/:id", element: <OrderDetails /> },
+    //         { path: "users", element: <Users /> },
+    //         { path: "analytics", element: <Analytics /> },
+    //       ],
+    //     },
+    //   ],
+    // },
 
     { path: "*", element: <NotFound /> },
   ])

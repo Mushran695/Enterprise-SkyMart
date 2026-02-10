@@ -1,15 +1,25 @@
-import { useContext } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { ShoppingCartContext } from "../../Context"
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/outline"
 
 const AdminHeader = () => {
-  const { account, handleSignOut } = useContext(ShoppingCartContext)
+  const [account, setAccount] = useState(null)
   const navigate = useNavigate()
 
+  useEffect(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("user") || "null")
+      setAccount(u)
+    } catch (e) {
+      setAccount(null)
+    }
+  }, [])
+
   const logout = () => {
-    handleSignOut()
-    navigate("/sign-in")
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    // navigate to admin login
+    navigate("/login")
   }
 
   return (
@@ -21,19 +31,11 @@ const AdminHeader = () => {
 
       {/* RIGHT */}
       <div className="flex items-center gap-4">
-        <span className="text-sm text-gray-600">
-          {account?.email}
-        </span>
+        <span className="text-sm text-gray-600">{account?.email}</span>
 
-        <button
-  onClick={() => {
-    localStorage.removeItem("user")
-    window.location.href = "/sign-in"
-  }}
-  className="text-sm text-red-600"
->
-  Logout
-</button>
+        <button onClick={logout} className="text-sm text-red-600">
+          Logout
+        </button>
 
       </div>
     </header>

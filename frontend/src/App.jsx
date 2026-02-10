@@ -7,8 +7,8 @@ import MyAccount from './Pages/MyAccount'
 import OrderConfirmation from './Pages/OrderConfirmation'
 import OrderTracking from './Pages/OrderTracking'
 import CartSummary from './Components/CartSummary'
-import AdminDashboard from './Pages/Admin/AdminDashboard'
-import Analytics from './Pages/Admin/Analytics'
+// import AdminDashboard from './Pages/Admin/AdminDashboard'
+// import Analytics from './Pages/Admin/Analytics'
 import ProtectedRoute from './Components/ProtectedRoute'
 
 function App() {
@@ -24,8 +24,8 @@ function App() {
       <Route path="/my-account" element={<MyAccount />} />
       
       {/* ADMIN ROUTES */}
-      <Route path="/admin" element={<ProtectedRoute requireAdmin={true}><AdminDashboard /></ProtectedRoute>} />
-      <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin={true}><Analytics /></ProtectedRoute>} />
+      {/* <Route path="/admin" element={<ProtectedRoute requireAdmin={true}><AdminDashboard /></ProtectedRoute>} /> */}
+      {/* <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin={true}><Analytics /></ProtectedRoute>} /> */}
     </Routes>
   )
 }

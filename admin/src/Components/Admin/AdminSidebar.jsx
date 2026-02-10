@@ -10,27 +10,27 @@ import {
 const menu = [
   {
     name: "Dashboard",
-    path: "/admin",
+    path: "",
     icon: Squares2X2Icon,
   },
   {
     name: "Products",
-    path: "/admin/products",
+    path: "products",
     icon: ShoppingBagIcon,
   },
   {
     name: "Orders",
-    path: "/admin/orders",
+    path: "orders",
     icon: ClipboardDocumentListIcon,
   },
   {
     name: "Users",
-    path: "/admin/users",
+    path: "users",
     icon: UsersIcon,
   },
   {
     name: "Analytics",
-    path: "/admin/analytics",
+    path: "analytics",
     icon: ChartBarIcon,
   },
 ]
@@ -52,7 +52,7 @@ const AdminSidebar = () => {
             <NavLink
               key={item.name}
               to={item.path}
-              end={item.path === "/admin"}
+              end={item.path === ""}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-2 rounded text-sm transition
                 ${
