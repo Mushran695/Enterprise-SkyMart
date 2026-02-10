@@ -1,28 +1,23 @@
-import axios from "axios"
-import { API_BASE } from "./baseUrl"
+import api from "./axios"
 
-const PRODUCTS_API = `${API_BASE}/products`
-
-const authHeaders = () => ({
-  Authorization: `Bearer ${localStorage.getItem("token")}`
-})
+const PRODUCTS_PATH = `/products`
 
 export const getAllProducts = async () => {
-  const res = await axios.get(PRODUCTS_API)
+  const res = await api.get(PRODUCTS_PATH)
   return res.data
 }
 
 export const addProduct = async (data) => {
-  const res = await axios.post(PRODUCTS_API, data, { headers: authHeaders() })
+  const res = await api.post(PRODUCTS_PATH, data)
   return res.data
 }
 
 export const updateProduct = async (id, data) => {
-  const res = await axios.put(`${PRODUCTS_API}/${id}`, data, { headers: authHeaders() })
+  const res = await api.put(`${PRODUCTS_PATH}/${id}`, data)
   return res.data
 }
 
 export const deleteProduct = async (id) => {
-  const res = await axios.delete(`${PRODUCTS_API}/${id}`, { headers: authHeaders() })
+  const res = await api.delete(`${PRODUCTS_PATH}/${id}`)
   return res.data
 }
