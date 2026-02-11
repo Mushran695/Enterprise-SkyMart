@@ -1,0 +1,17 @@
+file:///Users/syedishaqmushran/Desktop/Enterprise-SkyMart/skymart-enterprise-backend/services/admin-service/app.js:47
+import express from 'express'
+^^^^^^^^^^^^^^
+
+SyntaxError: Identifier 'express' has already been declared
+    at compileSourceTextModule (node:internal/modules/esm/utils:305:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:110:18)
+    at #translate (node:internal/modules/esm/loader:467:20)
+    at afterLoad (node:internal/modules/esm/loader:523:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:528:12)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:571:36)
+    at afterResolve (node:internal/modules/esm/loader:619:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:625:12)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:160:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:245:17)
+
+Node.js v25.5.0

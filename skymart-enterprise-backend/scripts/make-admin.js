@@ -19,7 +19,11 @@ const run = async () => {
   try {
     await mongoose.connect(mongoUri)
     console.log('Connected to Mongo at', mongoUri)
-    const user = await User.findOneAndUpdate({ email }, { $set: { role: 'admin' } }, { new: true })
+    const user = await User.findOneAndUpdate(
+      { email },
+      { $set: { role: 'admin', isAdmin: true } },
+      { new: true }
+    )
     if (!user) {
       console.error('User not found:', email)
       process.exit(2)
