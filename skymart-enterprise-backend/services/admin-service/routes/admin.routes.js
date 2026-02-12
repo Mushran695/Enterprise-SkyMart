@@ -9,8 +9,24 @@ import { Router } from 'express'
 const router = express.Router()
 
 // Admin analytics route placeholder (reuse analytics-service or implement here)
-router.get('/analytics', protect, adminOnly, async (req, res) => {
-  res.json({ message: 'Admin analytics endpoint - implement or proxy to analytics-service' })
+import { cache, invalidatePattern } from '../middleware/cache.js'
+
+router.get('/analytics', protect, adminOnly, cache('admin:stats', 60), async (req, res) => {
+  try {
+    const totalOrders = await Order.countDocuments()
+    const totalUsers = await User.countDocuments()
+    const totalProducts = await Product.countDocuments()
+    const revenueAgg = await Order.aggregate([{ $group: { _id: null, total: { $sum: '$totalAmount' } } }])
+    const result = {
+      revenue: revenueAgg[0]?.total || 0,
+      orders: totalOrders,
+      users: totalUsers,
+      products: totalProducts
+    }
+    res.json(result)
+  } catch (error) {
+    res.status(500).json({ message: 'Admin analytics failed' })
+  }
 })
 
 router.get('/users', protect, adminOnly, async (req, res) => {
@@ -34,6 +50,8 @@ router.get('/products', protect, adminOnly, async (req, res) => {
 router.post('/products', protect, adminOnly, async (req, res) => {
   try {
     const product = await Product.create(req.body)
+    // invalidate caches affected by product changes
+    try { await invalidatePattern('products:*'); await invalidatePattern('admin:analytics'); await invalidatePattern('analytics:*') } catch (e) {}
     res.status(201).json(product)
   } catch (error) {
     res.status(400).json({ message: error.message })
@@ -44,6 +62,7 @@ router.put('/products/:id', protect, adminOnly, async (req, res) => {
   try {
     const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true })
     if (!updated) return res.status(404).json({ message: 'Product not found' })
+    try { await invalidatePattern('products:*'); await invalidatePattern('admin:analytics'); await invalidatePattern('analytics:*') } catch (e) {}
     res.json(updated)
   } catch (error) {
     res.status(400).json({ message: error.message })
@@ -54,6 +73,7 @@ router.delete('/products/:id', protect, adminOnly, async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id)
     if (!deleted) return res.status(404).json({ message: 'Product not found' })
+    try { await invalidatePattern('products:*'); await invalidatePattern('admin:analytics'); await invalidatePattern('analytics:*') } catch (e) {}
     res.json({ message: 'Product removed' })
   } catch (error) {
     res.status(400).json({ message: error.message })

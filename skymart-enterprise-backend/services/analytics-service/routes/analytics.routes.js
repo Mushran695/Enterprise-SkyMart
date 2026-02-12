@@ -3,10 +3,11 @@ import Order from '../models/Order.js'
 import Product from '../models/Product.js'
 import User from '../models/User.js'
 import { protect } from '../middleware/auth.middleware.js'
+import { cache, invalidatePattern } from '../middleware/cache.js'
 
 const router = express.Router()
 
-router.get('/stats', protect, async (req, res) => {
+router.get('/stats', protect, cache('analytics', 60), async (req, res) => {
   try {
     const [totalOrders, totalUsers, totalProducts, revenueAgg] = await Promise.all([
       Order.countDocuments(),
@@ -29,7 +30,7 @@ router.get('/stats', protect, async (req, res) => {
   }
 })
 
-router.get('/orders', protect, async (req, res) => {
+router.get('/orders', protect, cache('analytics', 60), async (req, res) => {
   try {
     const data = await Order.aggregate([
       { $group: { _id: { $month: '$createdAt' }, orders: { $sum: 1 } } },
@@ -44,7 +45,7 @@ router.get('/orders', protect, async (req, res) => {
   }
 })
 
-router.get('/revenue', protect, async (req, res) => {
+router.get('/revenue', protect, cache('analytics', 60), async (req, res) => {
   try {
     const data = await Order.aggregate([
       { $group: { _id: { $month: '$createdAt' }, revenue: { $sum: '$totalAmount' } } },
@@ -59,7 +60,7 @@ router.get('/revenue', protect, async (req, res) => {
   }
 })
 
-router.get('/categories', protect, async (req, res) => {
+router.get('/categories', protect, cache('analytics', 60), async (req, res) => {
   try {
     const data = await Order.aggregate([
       { $unwind: '$products' },
