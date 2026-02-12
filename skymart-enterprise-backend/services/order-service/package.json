@@ -16,6 +16,7 @@
     "http-proxy-middleware": "^2.0.6",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "kafkajs": "^2.2.4"
   }
 }

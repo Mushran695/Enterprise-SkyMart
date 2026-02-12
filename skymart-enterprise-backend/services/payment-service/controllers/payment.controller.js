@@ -2,6 +2,7 @@ import razorpay from '../config/razorpay.js'
 import crypto from 'crypto'
 import Order from '../models/order.model.js'
 import Cart from '../models/cart.model.js'
+import { publish } from '../kafkaClient.js'
 
 export const createOrder = async (req, res) => {
   try {
@@ -44,6 +45,21 @@ export const verifyPayment = async (req, res) => {
         const newOrder = new Order({ user: userId, products: orderProducts, totalAmount, status: 'Pending', payment: { razorpay_order_id, razorpay_payment_id, razorpay_signature } })
         await newOrder.save()
         await Cart.findOneAndUpdate({ user: userId }, { items: [], totalAmount: 0 })
+
+        // publish ORDER_CREATED
+        try {
+          await publish('ORDER_CREATED', { id: newOrder._id, user: newOrder.user, totalAmount: newOrder.totalAmount })
+        } catch (e) {
+          console.error('Failed to publish ORDER_CREATED', e)
+        }
+
+        // publish PAYMENT_SUCCESS
+        try {
+          await publish('PAYMENT_SUCCESS', { orderId: newOrder._id, payment: { razorpay_order_id, razorpay_payment_id } })
+        } catch (e) {
+          console.error('Failed to publish PAYMENT_SUCCESS', e)
+        }
+
         return res.status(200).json({ success: true, message: 'Payment verified and order created', orderId: newOrder._id })
       } catch (dbError) {
         console.error('Database error while saving order:', dbError)

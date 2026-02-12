@@ -1,10 +1,14 @@
 import http from 'http'
 import app from './app.js'
 import config from './config/index.js'
+import { connectProducer } from './kafkaClient.js'
 
 const PORT = config.port || 3002
 
 const server = http.createServer(app)
+
+// Connect Kafka producer (best-effort)
+connectProducer().catch(err => console.error('Kafka connect failed', err))
 
 server.listen(PORT, () => {
   console.log(`${process.env.SERVICE_NAME || 'order-service'} listening on ${PORT} (env=${config.env})`)

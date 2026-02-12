@@ -1,5 +1,6 @@
 import Order from '../models/order.model.js'
 import Cart from '../models/cart.model.js'
+import { publish } from '../kafkaClient.js'
 
 export const placeOrder = async (req, res) => {
   try {
@@ -27,6 +28,13 @@ export const placeOrder = async (req, res) => {
     cart.items = []
     cart.totalAmount = 0
     await cart.save()
+
+    // publish ORDER_CREATED event
+    try {
+      await publish('ORDER_CREATED', { id: order._id, user: order.user, totalAmount: order.totalAmount })
+    } catch (e) {
+      console.error('Failed to publish ORDER_CREATED', e)
+    }
 
     res.status(201).json({ success: true, order })
   } catch (err) {

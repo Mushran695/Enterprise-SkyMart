@@ -1,6 +1,7 @@
 import express from 'express'
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
+import { publish } from '../kafkaClient.js'
 
 const router = express.Router()
 
@@ -15,6 +16,13 @@ router.post('/register', async (req, res) => {
     }
 
     const user = await User.create({ name, email, password })
+
+    // publish USER_REGISTERED event
+    try {
+      await publish('USER_REGISTERED', { id: user._id, name: user.name, email: user.email })
+    } catch (e) {
+      console.error('Failed to publish USER_REGISTERED', e)
+    }
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
