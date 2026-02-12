@@ -11,11 +11,11 @@ const defaultOpts = {
 let isConnected = false
 
 export default async function connectDB(opts = {}) {
-  const uri = config.mongoUri
+  const uri = config.mongoUri || process.env.MONGO_URI || process.env.MONGODB_URI
   if (!uri) throw new Error('MONGO_URI is not set')
-  if (isConnected) return mongoose.connection
+  if (isConnected && mongoose.connection && mongoose.connection.readyState === 1) return mongoose.connection
   const options = { ...defaultOpts, ...opts }
-  await mongoose.connect(uri, options)
+  const conn = await mongoose.connect(uri, options)
   isConnected = true
 
   mongoose.connection.on('connected', () => {
@@ -32,22 +32,6 @@ export default async function connectDB(opts = {}) {
     console.error('MongoDB error', err)
   })
 
+  console.log(`product-service: MongoDB Connected: ${conn.connection.host}`)
   return mongoose.connection
 }
-import mongoose from 'mongoose'
-
-const connectDB = async () => {
-  try {
-    if (mongoose.connection.readyState === 1) return mongoose.connection
-    const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI
-    if (!mongoUri) throw new Error('Missing MongoDB URI')
-    const conn = await mongoose.connect(mongoUri)
-    console.log(`product-service: MongoDB Connected: ${conn.connection.host}`)
-    return conn.connection
-  } catch (err) {
-    console.error('product-service: MongoDB Error:', err.message)
-    throw err
-  }
-}
-
-export default connectDB

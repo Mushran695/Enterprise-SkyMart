@@ -17,6 +17,13 @@ async function main() {
       process.exit(2);
     }
     console.log('User promoted to admin:', email);
+    // invalidate admin caches after role change
+    try {
+      const { invalidateAdminCache } = await import('../lib/cacheInvalidate.js')
+      await invalidateAdminCache()
+    } catch (e) {
+      console.warn('Failed to invalidate admin cache', e)
+    }
     await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
