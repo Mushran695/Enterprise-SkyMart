@@ -1,4 +1,26 @@
 FROM node:18-alpine
+
+RUN addgroup -S app && adduser -S app -G app
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+# curling for healthchecks
+RUN apk add --no-cache curl
+
+COPY . .
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+USER app
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
+FROM node:18-alpine
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --production
