@@ -10,7 +10,7 @@ const server = http.createServer(app)
 // Connect Kafka producer (best-effort)
 connectProducer().catch(err => console.error('Kafka connect failed', err))
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`${process.env.SERVICE_NAME || 'auth-service'} listening on ${PORT} (env=${config.env})`)
 })
 

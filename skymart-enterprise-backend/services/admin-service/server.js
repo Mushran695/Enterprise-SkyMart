@@ -6,7 +6,7 @@ const PORT = config.port || 3005
 
 const server = http.createServer(app)
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`${process.env.SERVICE_NAME || 'admin-service'} listening on ${PORT} (env=${config.env})`)
 })
 

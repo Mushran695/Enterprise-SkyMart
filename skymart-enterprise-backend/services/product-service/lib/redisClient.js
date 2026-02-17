@@ -1,6 +1,6 @@
 import Redis from 'ioredis'
 
-const url = process.env.REDIS_URL || process.env.REDIS || 'redis://127.0.0.1:6379'
+const url = process.env.REDIS_URL || process.env.REDIS || 'redis://redis:6379'
 let redis = null
 let useFallback = Boolean(process.env.FORCE_REDIS_FALLBACK && process.env.FORCE_REDIS_FALLBACK !== '0')
 

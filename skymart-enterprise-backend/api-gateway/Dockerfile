@@ -1,4 +1,7 @@
-FROM nginx:stable-alpine
+FROM nginx:alpine
+
+# Remove default config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy only server block config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]

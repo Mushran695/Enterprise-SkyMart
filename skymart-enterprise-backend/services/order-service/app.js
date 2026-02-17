@@ -17,9 +17,14 @@ app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-if (config.env === 'production') app.use(morgan('combined')); else app.use(morgan('dev'))
+app.use(morgan(config.env === 'production' ? 'combined' : 'dev'))
 
-app.use(rateLimit({ windowMs: config.rateLimit.windowMs, max: config.rateLimit.max }))
+app.use(
+  rateLimit({
+    windowMs: config.rateLimit.windowMs,
+    max: config.rateLimit.max,
+  })
+)
 
 // Mount extracted routes if available
 try {
@@ -34,38 +39,25 @@ try {
 
 // Phase-1 fallback proxy to monolith for unextracted paths
 const MONOLITH = process.env.MONOLITH_URL || 'http://host.docker.internal:5000'
-app.use('/_proxy/api/orders', createProxyMiddleware({ target: MONOLITH, changeOrigin: true, pathRewrite: { '^/_proxy': '' } }))
+app.use(
+  '/_proxy/api/orders',
+  createProxyMiddleware({
+    target: MONOLITH,
+    changeOrigin: true,
+    pathRewrite: { '^/_proxy': '' },
+  })
+)
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: process.env.SERVICE_NAME || 'order-service' }))
+app.get('/health', (_req, res) =>
+  res.json({ ok: true, service: process.env.SERVICE_NAME || 'order-service' })
+)
 
 app.use(notFound)
 app.use(errorHandler)
 
-if (config.mongoUri) connectDB().catch((e) => console.warn('connectDB failed', e.message))
-
-export default app
-import express from 'express'
-import dotenv from 'dotenv'
-import connectDB from './config/db.js'
-import orderRoutes from './routes/order.routes.js'
-import { createProxyMiddleware } from 'http-proxy-middleware'
-
-dotenv.config()
-const app = express()
-app.use(express.json())
-
-const MONOLITH = process.env.MONOLITH_URL || 'http://host.docker.internal:5000'
-
-if (process.env.MONGO_URI) {
-  connectDB().catch((e) => console.warn('order-service: mongo connect failed', e.message))
+// Connect DB if mongoUri exists
+if (config.mongoUri || process.env.MONGO_URI || process.env.MONGODB_URI) {
+  connectDB().catch((e) => console.warn('order-service: connectDB failed', e.message))
 }
 
-app.use('/api/orders', orderRoutes)
-
-// Fallback proxy for order paths not yet extracted
-app.use('/_proxy/api/orders', createProxyMiddleware({ target: MONOLITH, changeOrigin: true, pathRewrite: { '^/_proxy': '' } }))
-
-app.get('/health', (req, res) => res.json({ ok: true, service: 'order-service' }))
-
-const PORT = process.env.PORT || 3002
-app.listen(PORT, () => console.log(`order-service listening ${PORT}`))
+export default app
