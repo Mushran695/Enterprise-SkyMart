@@ -1,6 +1,6 @@
 import express from 'express'
 import helmet from 'helmet'
-import cors from 'cors'
+// import cors from 'cors'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import config from './config/index.js'
@@ -13,7 +13,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware'
 const app = express()
 
 app.use(helmet())
-app.use(cors())
+// app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
@@ -26,12 +26,19 @@ app.use(
   })
 )
 
-// Mount extracted routes if available
+// Mount extracted routes if available (supports router object or factory)
 try {
   const routesIndex = path.resolve('./routes/index.js')
   if (fs.existsSync(routesIndex)) {
     const routes = await import(routesIndex)
-    if (routes && typeof routes.default === 'function') app.use(routes.default())
+    const routeExport = routes && routes.default ? routes.default : routes
+    if (routeExport) {
+      if (typeof routeExport === 'function') {
+        app.use(routeExport())
+      } else {
+        app.use(routeExport)
+      }
+    }
   }
 } catch (err) {
   // ignore
