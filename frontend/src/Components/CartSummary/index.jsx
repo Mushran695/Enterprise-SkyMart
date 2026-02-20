@@ -116,7 +116,7 @@ const CartSummary = () => {
             }
 
             // VERIFY PAYMENT & CREATE ORDER IN ONE CALL
-            const verifyRes = await axios.post(
+            const verifyRes = await api.post(
               "/payment/verify-payment",
               payload
             )
