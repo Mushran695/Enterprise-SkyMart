@@ -86,9 +86,9 @@ const CategoryPage = ({ title, categoryValue }) => {
                   : "grid-cols-1"
               }`}
             >
-              {visibleProducts.map(item => (
+              {visibleProducts.map((item, idx) => (
                 <div
-                  key={item.id}
+                  key={item._id || item.id || `${item.title || 'prod'}-${idx}`}
                   className="bg-white rounded-xl shadow hover:shadow-md transition p-2"
                 >
                   <Card data={item} />

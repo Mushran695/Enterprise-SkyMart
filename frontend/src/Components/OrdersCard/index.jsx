@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { API_BASE } from "../../services/baseUrl"
+import api from "../../api"
 
 const OrdersList = () => {
   const [orders, setOrders] = useState([])
@@ -8,11 +8,8 @@ const OrdersList = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch(`${API_BASE}/orders/my`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        })
-        if (!res.ok) throw new Error(`Status ${res.status}`)
-        const data = await res.json()
+        const res = await api.get(`/orders/my`)
+        const data = res.data
         setOrders(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error("Failed to load orders:", err)

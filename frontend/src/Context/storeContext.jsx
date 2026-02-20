@@ -1,11 +1,17 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
-import axios from "../services/axios"
+import api from "../api"
 
 export const StoreContext = createContext()
 
 export const StoreProvider = ({ children }) => {
   /* ================== AUTH ================== */
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null")
+    } catch {
+      return null
+    }
+  })
 
   useEffect(() => {
     const saved = localStorage.getItem("user")
@@ -19,9 +25,10 @@ export const StoreProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("user")
+    localStorage.removeItem("token")
     localStorage.removeItem("cart")
     setUser(null)
-    setCart([])
+    setCart({ items: [] })
   }
 
   /* ================== PRODUCTS ================== */
@@ -32,7 +39,8 @@ export const StoreProvider = ({ children }) => {
   const fetchProducts = async () => {
     try {
       setLoading(true)
-      const { data } = await axios.get("/products")
+      const res = await api.get("/products")
+      const data = res.data
 
       const list = Array.isArray(data) ? data : data.products || []
 
@@ -68,6 +76,11 @@ export const StoreProvider = ({ children }) => {
   const [onlyFeatured, setOnlyFeatured] = useState(false)
   const [onlyDiscount, setOnlyDiscount] = useState(false)
 
+  const setMaxPrice = (max) => {
+    if (max == null) return setPriceRange(null)
+    const min = (priceRange && priceRange[0]) || 0
+    setPriceRange([min, Number(max)])
+  }
   const filteredProducts = useMemo(() => {
     let result = [...products]
 
@@ -107,30 +120,89 @@ export const StoreProvider = ({ children }) => {
   /* ================== CART ================== */
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem("cart")
-    return saved ? JSON.parse(saved) : []
+    try {
+      return saved ? JSON.parse(saved) : { items: [] }
+    } catch {
+      return { items: [] }
+    }
   })
 
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart))
+    try {
+      localStorage.setItem("cart", JSON.stringify(cart))
+    } catch {}
   }, [cart])
 
-  const addToCart = (product) => {
-    setCart(prev => {
-      const exists = prev.find(p => p._id === product._id)
-      if (exists) {
-        return prev.map(p =>
-          p._id === product._id ? { ...p, qty: p.qty + 1 } : p
-        )
+  const loadCart = async () => {
+    try {
+      const res = await api.get("/cart")
+      const serverCart = res.data || { items: [], totalAmount: 0 }
+      const normalized = {
+        items: (serverCart.items || []).map(i => ({
+          ...i,
+          product: i.product && i.product._id ? i.product._id : i.product,
+          quantity: i.quantity || i.qty || 1
+        })),
+        totalAmount: serverCart.totalAmount || 0
       }
-      return [...prev, { ...product, qty: 1 }]
-    })
+      setCart(normalized)
+    } catch (err) {
+      console.error("Failed to load cart", err)
+      setCart({ items: [] })
+    }
   }
 
-  const removeFromCart = (id) => {
-    setCart(prev => prev.filter(p => p._id !== id))
+  useEffect(() => {
+    if (user) loadCart()
+    else setCart({ items: [] })
+  }, [user])
+
+  const updateCartItemQuantity = async (productId, qty) => {
+    if (qty < 1) {
+      await removeFromCart(productId)
+      return
+    }
+    try {
+      await api.put("/cart/update", { productId, qty })
+      await loadCart()
+    } catch (err) {
+      console.error("Qty update failed", err)
+      alert("Failed to update quantity")
+    }
   }
 
-  const clearCart = () => setCart([])
+  const addToCart = async (product) => {
+    try {
+      await api.post("/cart", {
+        productId: product._id,
+        category: product.category,
+        title: product.name || product.title,
+        price: product.price,
+        image: product.image,
+      })
+      await loadCart()
+    } catch (err) {
+      console.error("Add to cart failed", err)
+      alert("Failed to add to cart")
+    }
+  }
+
+  const removeFromCart = async (productId) => {
+    try {
+      await api.delete(`/cart/${productId}`)
+      await loadCart()
+    } catch (err) {
+      console.error("Remove failed", err)
+      alert("Failed to remove item")
+    }
+  }
+
+  const clearCart = async () => {
+    try {
+      setCart({ items: [] })
+      localStorage.removeItem("cart")
+    } catch {}
+  }
 
   /* ================== UI ================== */
   const [isProductDetailOpen, setIsProductDetailOpen] = useState(false)
@@ -157,6 +229,7 @@ export const StoreProvider = ({ children }) => {
         category,
         setCategory,
         setPriceRange,
+        setMaxPrice,
         setMinRating,
         onlyFeatured,
         setOnlyFeatured,
@@ -167,6 +240,7 @@ export const StoreProvider = ({ children }) => {
         cart,
         addToCart,
         removeFromCart,
+        updateCartItemQuantity,
         clearCart,
 
         /* UI */

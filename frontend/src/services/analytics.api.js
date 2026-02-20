@@ -1,30 +1,21 @@
-import axios from "axios"
-import { API_BASE } from "./baseUrl"
-
-const API = `${API_BASE}/analytics`
-
-const auth = () => ({
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem("token")}`
-  }
-})
+import api from "../api"
 
 export const getAdminStats = async () => {
-  const { data } = await axios.get(`${API}/stats`, auth())
+  const { data } = await api.get("/analytics/stats")
   return data
 }
 
 export const getOrderStats = async () => {
-  const { data } = await axios.get(`${API}/orders`, auth())
+  const { data } = await api.get("/analytics/orders")
   return data
 }
 
 export const getRevenueStats = async () => {
-  const { data } = await axios.get(`${API}/revenue`, auth())
+  const { data } = await api.get("/analytics/revenue")
   return data
 }
 
 export const getCategoryStats = async () => {
-  const { data } = await axios.get(`${API}/categories`, auth())
+  const { data } = await api.get("/analytics/categories")
   return data
 }

@@ -135,7 +135,14 @@ export const ShoppingCartProvider = ({ children }) => {
   const loadCart = async () => {
     try {
       const res = await api.get("/cart")
-      setCartItems(res.data?.items || [])
+      const items = res.data?.items || []
+      // normalize backend item shape to include `qty` expected by UI
+      const normalized = items.map(i => ({
+        ...i,
+        qty: i.quantity || i.qty || 1,
+        product: i.product && i.product._id ? i.product._id : i.product,
+      }))
+      setCartItems(normalized)
     } catch {
       console.error("Load cart failed")
     }
@@ -192,6 +199,15 @@ export const ShoppingCartProvider = ({ children }) => {
     console.error("Qty update failed")
   }
 }
+
+  /* ======================
+      FILTER HELPERS
+  ====================== */
+  const setMaxPrice = (max) => {
+    if (max == null) return setPriceRange(null)
+    const min = (priceRange && priceRange[0]) || 0
+    setPriceRange([min, Number(max)])
+  }
 
   /* =======================
       ORDERS
@@ -271,6 +287,7 @@ export const ShoppingCartProvider = ({ children }) => {
 
         priceRange,
         setPriceRange,
+        setMaxPrice,
         minRating,
         setMinRating,
         onlyFeatured,

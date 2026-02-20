@@ -4,7 +4,7 @@ import { ChevronLeftIcon, LockClosedIcon } from "@heroicons/react/24/solid"
 import { ShoppingCartContext } from "../../Context"
 import Layout from "../../Components/Layout"
 import { formatINR } from "../../utils"
-import axios from "../../services/axios"
+import api from "../../api"
 
 const RAZORPAY_KEY = "rzp_test_SA848OYsod4lAU" // 🔑 Your Razorpay Public Key
 
@@ -34,26 +34,21 @@ const CartSummary = () => {
         return false
       }
 
-      // Sync each item: try to set exact quantity via update endpoint first
+      // Sync each item via backend endpoints (backend handles add/increment)
       for (const item of cartItems) {
         try {
-          await axios.put("/cart/update", {
+          await api.put("/cart/update", {
             productId: item.product,
             qty: item.quantity || item.qty || 1
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
           })
         } catch (err) {
-          // If item not found on server, fallback to add (POST)
           if (err.response && err.response.status === 404) {
-            await axios.post("/cart", {
+            await api.post("/cart", {
               productId: item.product,
               category: item.category,
               title: item.title,
               price: item.price,
               image: item.image
-            }, {
-              headers: { Authorization: `Bearer ${token}` }
             })
           } else {
             throw err
@@ -72,7 +67,7 @@ const CartSummary = () => {
   const createRazorpayOrder = async () => {
     try {
       const amount = Math.round(cartTotal)
-      const { data } = await axios.post("/payment/create-order", { amount })
+      const { data } = await api.post("/payment/create-order", { amount })
       return data
     } catch (err) {
       console.error("Order creation failed:", err)

@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import axios from "axios"
-import { API_BASE } from "../../services/baseUrl"
+import api from "../../api"
 import Layout from "../../Components/Layout"
 
 function SignUp() {
@@ -29,19 +28,11 @@ function SignUp() {
     try {
       setLoading(true)
 
-      const { data } = await axios.post(
-        `${API_BASE}/auth/register`,
-        {
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      const { data } = await api.post("/auth/register", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      })
 
       // 🔥 If backend returned user, registration succeeded
       if (!data.user) {

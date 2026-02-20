@@ -1,5 +1,3 @@
-import axios from "axios"
-import { API_BASE } from "./baseUrl"
+import api from "../api"
 
-export const adminLogin = (data) =>
-  axios.post(`${API_BASE}/auth/login`, data)
+export const adminLogin = (data) => api.post("/auth/login", data)

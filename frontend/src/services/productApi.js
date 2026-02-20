@@ -1,37 +1,20 @@
-import axios from "axios"
-import { API_BASE } from "./baseUrl"
+import api from "../api"
 
-/* =========================
-   AXIOS INSTANCE
-========================= */
-const api = axios.create({
-  baseURL: `${API_BASE}/products`,
-})
-
-/* =========================
-   GET ALL PRODUCTS
-========================= */
 export const getAllProducts = async () => {
-  const res = await api.get("/")
-  return res.data   // ✅ backend sends array directly
+  const res = await api.get("/products")
+  return res.data || []
 }
 
-/* =========================
-   GET PRODUCTS (alias)
-========================= */
 export const getProducts = async (category) => {
-  const res = await api.get("/", {
+  const res = await api.get("/products", {
     params: category ? { category } : {},
   })
-  return res.data
+  return res.data || []
 }
 
-/* =========================
-   PRODUCTS BY CATEGORY
-========================= */
 export const getProductsByCategory = async (category) => {
-  const res = await api.get("/", {
+  const res = await api.get("/products", {
     params: { category },
   })
-  return res.data
+  return res.data || []
 }

@@ -34,6 +34,18 @@ instance.interceptors.response.use(
       localStorage.clear()
       window.location.href = "/sign-in"
     }
+    // API debug helper: in dev, log failed responses
+    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+      try {
+        // eslint-disable-next-line no-console
+        console.warn("API error:", {
+          url: err.config?.url,
+          method: err.config?.method,
+          status: err.response?.status,
+          message: err.response?.data || err.message,
+        })
+      } catch (e) {}
+    }
     return Promise.reject(err)
   }
 )

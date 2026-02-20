@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { API_BASE } from '../../services/baseUrl'
+import api from '../../api'
 import { 
   CheckCircleIcon, 
   TruckIcon, 
@@ -23,22 +23,8 @@ const OrderTracking = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          navigate('/sign-in')
-          return
-        }
-
-        const response = await fetch(
-          `${API_BASE}/orders/${orderId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        )
-
-        const data = await response.json()
+        const res = await api.get(`/orders/${orderId}`)
+        const data = res.data
         if (!data || !data._id) {
           setError('Order not found')
           setLoading(false)
