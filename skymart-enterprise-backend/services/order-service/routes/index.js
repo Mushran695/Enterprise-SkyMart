@@ -5,7 +5,7 @@ import cartRoutes from './cart.routes.js'
 export default function routes() {
   const router = express.Router()
   router.use('/api/orders', orderRoutes)
-  router.use('/api', cartRoutes) // exposes /api/cart...
+  router.use('/api/cart', cartRoutes) // exposes /api/cart...
   return router
 }
 

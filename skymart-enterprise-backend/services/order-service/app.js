@@ -8,6 +8,7 @@ import connectDB from './config/db.js'
 import { notFound, errorHandler } from './middleware/errorHandler.js'
 import fs from 'fs'
 import path from 'path'
+import { pathToFileURL } from 'url'
 import { createProxyMiddleware } from 'http-proxy-middleware'
 
 const app = express()
@@ -30,7 +31,7 @@ app.use(
 try {
   const routesIndex = path.resolve('./routes/index.js')
   if (fs.existsSync(routesIndex)) {
-    const routes = await import(routesIndex)
+    const routes = await import(pathToFileURL(routesIndex).href)
     const routeExport = routes && routes.default ? routes.default : routes
     if (routeExport) {
       if (typeof routeExport === 'function') {
@@ -41,7 +42,7 @@ try {
     }
   }
 } catch (err) {
-  // ignore
+  console.error("Failed to mount routes:", err)
 }
 
 // Phase-1 fallback proxy to monolith for unextracted paths
