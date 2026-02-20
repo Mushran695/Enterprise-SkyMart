@@ -6,6 +6,7 @@ import Users from "./Pages/Admin/Users"
 import Analytics from "./Pages/Admin/Analytics"
 import OrderDetails from "./Pages/Admin/OrderDetails"
 import Login from "./Pages/Admin/Login"
+import Health from "./Pages/Admin/Health"
 import ProtectedRoute from "./Components/Admin/AdminProtectedRoute"
 import AdminLayout from "./Components/Admin/AdminLayout"
 
@@ -24,6 +25,7 @@ function App() {
         <Route path="orders/:id" element={<OrderDetails />} />
         <Route path="users" element={<Users />} />
         <Route path="analytics" element={<Analytics />} />
+        <Route path="health" element={<Health />} />
       </Route>
 
       {/* Fallback */}

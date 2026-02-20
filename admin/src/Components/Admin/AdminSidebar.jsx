@@ -33,6 +33,11 @@ const menu = [
     path: "analytics",
     icon: ChartBarIcon,
   },
+  {
+    name: "Health",
+    path: "health",
+    icon: ChartBarIcon,
+  },
 ]
 
 const AdminSidebar = () => {
