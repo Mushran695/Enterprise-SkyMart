@@ -9,6 +9,7 @@ import { notFound, errorHandler } from './middleware/errorHandler.js'
 import fs from 'fs'
 import path from 'path'
 import { createProxyMiddleware } from 'http-proxy-middleware'
+import paymentRoutes from './routes/payment.routes.js'
 
 const app = express()
 
@@ -17,11 +18,12 @@ app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-if (config.env === 'production') app.use(morgan('combined')); else app.use(morgan('dev'))
+if (config.env === 'production') app.use(morgan('combined'))
+else app.use(morgan('dev'))
 
 app.use(rateLimit({ windowMs: config.rateLimit.windowMs, max: config.rateLimit.max }))
 
-// Mount extracted routes if available
+// Mount extracted routes if available (supports runtime-extracted route bundles)
 try {
   const routesIndex = path.resolve('./routes/index.js')
   if (fs.existsSync(routesIndex)) {
@@ -29,7 +31,12 @@ try {
     if (routes && typeof routes.default === 'function') app.use(routes.default())
   }
 } catch (err) {
-  // ignore
+  // ignore optional extracted routes
+}
+
+// Mount payment routes
+if (paymentRoutes && typeof paymentRoutes === 'function') {
+  app.use('/api/payment', paymentRoutes)
 }
 
 // Phase-1 fallback proxy to monolith for unextracted paths
@@ -41,31 +48,11 @@ app.get('/health', (_req, res) => res.json({ ok: true, service: process.env.SERV
 app.use(notFound)
 app.use(errorHandler)
 
-if (config.mongoUri) connectDB().catch((e) => console.warn('connectDB failed', e.message))
-
-export default app
-import express from 'express'
-import dotenv from 'dotenv'
-import connectDB from './config/db.js'
-import paymentRoutes from './routes/payment.routes.js'
-import { createProxyMiddleware } from 'http-proxy-middleware'
-
-dotenv.config()
-const app = express()
-app.use(express.json())
-
-const MONOLITH = process.env.MONOLITH_URL || 'http://host.docker.internal:5000'
-
-if (process.env.MONGO_URI) {
+// Connect to Mongo only if a URI is provided
+const mongoUri = config?.mongoUri || process.env.MONGO_URI || process.env.MONGODB_URI
+if (mongoUri) {
   connectDB().catch((e) => console.warn('payment-service: mongo connect failed', e.message))
 }
 
-app.use('/api/payment', paymentRoutes)
-
-// Fallback proxy
-app.use('/_proxy/api/payment', createProxyMiddleware({ target: MONOLITH, changeOrigin: true, pathRewrite: { '^/_proxy': '' } }))
-
-app.get('/health', (req, res) => res.json({ ok: true, service: 'payment-service' }))
-
-const PORT = process.env.PORT || 3003
+const PORT = process.env.PORT || config.port || 3003
 app.listen(PORT, () => console.log(`payment-service listening ${PORT}`))
