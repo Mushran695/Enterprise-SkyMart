@@ -53,12 +53,6 @@ services:
     env_file: .env
     expose:
       - "3000"
-    environment:
-    - JWT_SECRET=${JWT_SECRET}
-    - MONGO_URI=${MONGO_URI}
-    - KAFKA_BROKERS=${KAFKA_BROKERS}
-    - REDIS_URL=${REDIS_URL}
-    - NODE_ENV=${NODE_ENV}
     networks:
       - backend
 

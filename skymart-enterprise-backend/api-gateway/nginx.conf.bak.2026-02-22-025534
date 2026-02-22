@@ -1,16 +1,33 @@
 server {
   listen 80;
 
-  # ✅ CORS: allow both Vite dev origins
-  add_header Access-Control-Allow-Origin $http_origin always;
+  # ✅ CORS (dev: allow only localhost:5173; avoids duplicate headers)
+  set $cors_origin "";
+  if ($http_origin = "http://localhost:5173") {
+      set $cors_origin $http_origin;
+  }
+
+  add_header Access-Control-Allow-Origin $cors_origin always;
+  add_header Access-Control-Allow-Credentials "true" always;
+  add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" always;
+  add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept, Origin, X-Requested-With" always;
+
+  if ($request_method = OPTIONS) {
+      return 204;
+    # ✅ CORS allowlist (frontend + admin)
+  set $cors_origin "";
+  if ($http_origin ~* ^http://localhost:(5173|5174)$) {
+      set $cors_origin $http_origin;
+  }
+
+  add_header Access-Control-Allow-Origin $cors_origin always;
   add_header Access-Control-Allow-Credentials "true" always;
   add_header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS" always;
   add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept, Origin, X-Requested-With" always;
   add_header Access-Control-Max-Age 86400 always;
 
-  # ✅ Preflight
   if ($request_method = OPTIONS) {
-    return 204;
+      return 204;
   }
 
   # ✅ INTERNAL rewrite: /api/x -> /api/x/ (prevents 301 redirects)
@@ -20,8 +37,7 @@ server {
   location = /api/payment   { rewrite ^ /api/payment/ break;   proxy_pass http://payment-service:3003; }
   location = /api/analytics { rewrite ^ /api/analytics/ break; proxy_pass http://analytics-service:3004; }
   location = /api/admin     { rewrite ^ /api/admin/ break;     proxy_pass http://admin-service:3005; }
-  location = /api/cart      { rewrite ^ /api/cart/ break;      proxy_pass http://order-service:3002; }
-
+  location = /api/cart { rewrite ^ /api/cart/ break; proxy_pass http://order-service:3002; }
   # ✅ Normal routing (supports /api/x/... )
   location /api/auth/      { proxy_pass http://auth-service:3000; }
   location /api/products/  { proxy_pass http://product-service:3001; }
@@ -29,7 +45,7 @@ server {
   location /api/payment/   { proxy_pass http://payment-service:3003; }
   location /api/analytics/ { proxy_pass http://analytics-service:3004; }
   location /api/admin/     { proxy_pass http://admin-service:3005; }
-  location /api/cart/      { proxy_pass http://order-service:3002; }
+  location /api/cart/  { proxy_pass http://order-service:3002; }
 
   # Health check
   location / { return 200 "OK\n"; }
