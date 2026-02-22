@@ -32,6 +32,7 @@ yarn-error.log*
 # OS
 # ==============================
 .DS_Store
+Thumbs.db
 
 # ==============================
 # IDE
@@ -39,3 +40,29 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# ==============================
+# Temporary folders
+# ==============================
+tmp/
+**/tmp/
+
+# ==============================
+# Docker
+# ==============================
+docker-compose.override.yml
+docker-compose.broken.yml
+
+# ==============================
+# Local scripts
+# ==============================
+scripts/test_*.sh
+
+# ==============================
+# Runtime
+# ==============================
+*.pid
+*.seed
+
+# Allow checked-in env examples for templates
+!skymart-enterprise-backend/.env.example

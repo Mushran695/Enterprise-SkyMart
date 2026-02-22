@@ -3,10 +3,7 @@ import crypto from 'crypto'
 import Order from '../models/order.model.js'
 import Cart from '../models/cart.model.js'
 import { publish } from '../kafkaClient.js'
-
-import razorpay from "../config/razorpay.js"
-import Cart from "../models/cart.model.js"
-import { fetchProductsBulk } from "../utils/productClient.js"
+import { fetchProductsBulk } from '../utils/productClient.js'
 
 export const createOrder = async (req, res) => {
   try {
@@ -84,10 +81,8 @@ export const verifyPayment = async (req, res) => {
     }
 
     const body = razorpay_order_id + "|" + razorpay_payment_id
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(body)
-      .digest("hex")
+    const secretKey = (process.env.RAZORPAY_KEY_SECRET || "").toString()
+    const expectedSignature = crypto.createHmac("sha256", secretKey).update(body).digest("hex")
 
     if (expectedSignature !== razorpay_signature) {
       return res.status(400).json({ success: false, message: "Payment verification failed" })

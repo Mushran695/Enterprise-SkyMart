@@ -54,5 +54,4 @@ if (mongoUri) {
   connectDB().catch((e) => console.warn('payment-service: mongo connect failed', e.message))
 }
 
-const PORT = process.env.PORT || config.port || 3003
-app.listen(PORT, () => console.log(`payment-service listening ${PORT}`))
+export default app

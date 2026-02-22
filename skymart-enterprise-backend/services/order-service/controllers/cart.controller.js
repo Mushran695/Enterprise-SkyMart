@@ -1,13 +1,23 @@
 import Cart from "../models/cart.model.js"
 import mongoose from "mongoose"
 
+const computeTotal = (items) => {
+  return items.reduce((sum, it) => sum + (Number(it.price || 0) * Number(it.quantity || 0)), 0)
+}
+
 /* =========================
    GET CART
 ========================= */
 export const getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user._id })
-    return res.json(cart || { items: [] })
+    if (!cart) return res.json({ items: [], totalAmount: 0 })
+
+    // ensure totalAmount consistent
+    cart.totalAmount = computeTotal(cart.items)
+    await cart.save()
+
+    return res.json({ items: cart.items, totalAmount: cart.totalAmount })
   } catch (err) {
     console.error("getCart failed", err)
     return res.status(500).json({ message: "Failed to load cart" })
@@ -21,7 +31,7 @@ export const addToCart = async (req, res) => {
   try {
     const { productId, category, title, price, image } = req.body
 
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
       return res.status(400).json({ message: "Invalid productId" })
     }
 
@@ -41,25 +51,28 @@ export const addToCart = async (req, res) => {
           },
         ],
       })
-      return res.status(201).json(cart)
+    } else {
+      const item = cart.items.find((i) => i.product.toString() === productId)
+      if (item) item.quantity += 1
+      else {
+        cart.items.push({
+          product: new mongoose.Types.ObjectId(productId),
+          category,
+          title,
+          price,
+          image,
+          quantity: 1,
+        })
+      }
+
+      await cart.save()
     }
 
-    const item = cart.items.find((i) => i.product.toString() === productId)
-
-    if (item) item.quantity += 1
-    else {
-      cart.items.push({
-        product: new mongoose.Types.ObjectId(productId),
-        category,
-        title,
-        price,
-        image,
-        quantity: 1,
-      })
-    }
-
+    // recompute total and return consistent shape
+    cart.totalAmount = computeTotal(cart.items)
     await cart.save()
-    return res.json(cart)
+
+    return res.status(200).json({ items: cart.items, totalAmount: cart.totalAmount })
   } catch (err) {
     console.error("addToCart failed", err)
     return res.status(500).json({ message: "Add to cart failed" })
@@ -68,16 +81,23 @@ export const addToCart = async (req, res) => {
 
 /* =========================
    REMOVE FROM CART
+   route: DELETE /:productId
 ========================= */
 export const removeFromCart = async (req, res) => {
   try {
+    const { productId } = req.params
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid productId" })
+    }
+
     const cart = await Cart.findOne({ user: req.user._id })
-    if (!cart) return res.json({ items: [] })
+    if (!cart) return res.json({ items: [], totalAmount: 0 })
 
-    cart.items = cart.items.filter((i) => i.product.toString() !== req.params.id)
-
+    cart.items = cart.items.filter((i) => i.product.toString() !== productId)
+    cart.totalAmount = computeTotal(cart.items)
     await cart.save()
-    return res.json(cart)
+
+    return res.json({ items: cart.items, totalAmount: cart.totalAmount })
   } catch (err) {
     console.error("removeFromCart failed", err)
     return res.status(500).json({ message: "Remove failed" })
@@ -86,10 +106,19 @@ export const removeFromCart = async (req, res) => {
 
 /* =========================
    UPDATE QTY  (+ / -)
+   route: PUT /:productId   body: { qty }
 ========================= */
 export const updateQty = async (req, res) => {
   try {
-    const { productId, qty } = req.body
+    const productId = req.params.productId
+    const { qty } = req.body
+
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid productId" })
+    }
+
+    const n = Number(qty)
+    if (!Number.isFinite(n)) return res.status(400).json({ message: "Invalid qty" })
 
     const cart = await Cart.findOne({ user: req.user._id })
     if (!cart) return res.status(404).json({ message: "Cart not found" })
@@ -97,17 +126,16 @@ export const updateQty = async (req, res) => {
     const item = cart.items.find((i) => i.product.toString() === productId)
     if (!item) return res.status(404).json({ message: "Item not found" })
 
-    const n = Number(qty)
-    if (!Number.isFinite(n)) return res.status(400).json({ message: "Invalid qty" })
-
     if (n <= 0) {
       cart.items = cart.items.filter((i) => i.product.toString() !== productId)
     } else {
       item.quantity = n
     }
 
+    cart.totalAmount = computeTotal(cart.items)
     await cart.save()
-    return res.json(cart)
+
+    return res.json({ items: cart.items, totalAmount: cart.totalAmount })
   } catch (err) {
     console.error("updateQty failed", err)
     return res.status(500).json({ message: "Qty update failed" })

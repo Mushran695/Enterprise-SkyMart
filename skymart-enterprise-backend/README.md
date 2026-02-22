@@ -59,3 +59,25 @@ curl -v http://localhost:8080/api/analytics/health
 Notes
 - The compose stack includes a local `mongo` container for development. For production set `MONGO_URI` to your MongoDB Atlas URI in your environment or secrets store and remove the local `mongo` service.
 - Kafka is configured with an internal listener (for other services) and an external listener mapped to host port `9092` for local testing. If you need different behavior or cluster setups, update the Kafka env vars in `docker-compose.yml`.
+
+API Gateway CORS
+
+- **Restart gateway after config changes:**
+
+```bash
+docker compose restart api-gateway
+```
+
+- **Quick verification (simulate browser preflight and normal request):**
+
+```bash
+# Preflight (OPTIONS)
+curl -i -X OPTIONS http://localhost:8080/api/auth/login \
+	-H "Origin: http://localhost:5174" \
+	-H "Access-Control-Request-Method: POST"
+
+# Normal request — check Access-Control-Allow-Origin and that Authorization is forwarded upstream
+curl -i http://localhost:8080/api/auth/health -H "Origin: http://localhost:5174"
+```
+
+Ensure the response includes `Access-Control-Allow-Origin: http://localhost:5174` and `Access-Control-Allow-Credentials: true`.

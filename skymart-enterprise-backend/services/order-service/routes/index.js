@@ -5,11 +5,12 @@ import cartRoutes from './cart.routes.js'
 export default function routes() {
   const router = express.Router()
 
+  // mounted under app.use('/api', ...)
   // ✅ /api/orders/...
-  router.use('/api/orders', orderRoutes)
+  router.use('/orders', orderRoutes)
 
   // ✅ /api/cart/...
-  router.use('/api/cart', cartRoutes)
+  router.use('/cart', cartRoutes)
 
   return router
 }

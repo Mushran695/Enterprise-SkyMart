@@ -9,7 +9,8 @@ const router = express.Router()
 router.get('/my', protect, getMyOrders)
 router.get('/:id', protect, async (req, res) => {
   try {
-    const order = await Order.findOne({ _id: req.params.id, user: req.user._id }).populate('products.product')
+    // avoid populate to prevent missing Product schema dependency; return stored product ids and metadata
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id })
     if (!order) return res.status(404).json({ message: 'Order not found' })
     res.json(order)
   } catch (err) {

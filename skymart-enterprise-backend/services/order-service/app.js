@@ -6,7 +6,7 @@ import config from './config/index.js'
 import connectDB from './config/db.js'
 import { createProxyMiddleware } from 'http-proxy-middleware'
 import apiRoutes from './routes/index.js'
-
+import './models/Product.js'
 const app = express()
 
 app.use(helmet())
