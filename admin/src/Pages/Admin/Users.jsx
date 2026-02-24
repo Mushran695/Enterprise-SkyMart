@@ -125,7 +125,7 @@ const Users = () => {
                     onChange={e =>
                       updateRole(user._id, e.target.value)
                     }
-                    className={`px-3 py-1 rounded-full text-xs font-medium border outline-none cursor-pointer ${
+                    className={`px-3 py-2 rounded-full text-xs font-medium border outline-none cursor-pointer ${
                       roleStyles[user.role]
                     }`}
                   >
@@ -141,7 +141,7 @@ const Users = () => {
                     onChange={e =>
                       updateStatus(user._id, e.target.value)
                     }
-                    className={`px-3 py-1 rounded-full text-xs font-medium border outline-none cursor-pointer ${
+                    className={`px-3 py-2 rounded-full text-xs font-medium border outline-none cursor-pointer ${
                       statusStyles[user.status || "active"]
                     }`}
                   >

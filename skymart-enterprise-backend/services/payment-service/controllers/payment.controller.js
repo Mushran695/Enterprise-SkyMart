@@ -63,9 +63,15 @@ export const createOrder = async (req, res) => {
   }
 }
 
+/**
+ * ✅ VERIFY ONLY (NO ORDER CREATION HERE)
+ * Order creation should happen ONLY in order-service (placeOrder),
+ * otherwise it duplicates (payment-service + order-service both create).
+ */
 export const verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body
+
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       const missing = {}
       if (!razorpay_order_id) missing.razorpay_order_id = "missing"
@@ -74,12 +80,7 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing payment details", missing_fields: missing })
     }
 
-    // idempotency check
-    const already = await Order.findOne({ "payment.razorpay_payment_id": razorpay_payment_id })
-    if (already) {
-      return res.status(200).json({ success: true, message: "Payment already verified", orderId: already._id })
-    }
-
+    // ✅ signature verify
     const body = razorpay_order_id + "|" + razorpay_payment_id
     const secretKey = (process.env.RAZORPAY_KEY_SECRET || "").toString()
     const expectedSignature = crypto.createHmac("sha256", secretKey).update(body).digest("hex")
@@ -89,49 +90,33 @@ export const verifyPayment = async (req, res) => {
     }
 
     const userId = req.user._id
-    const cart = await Cart.findOne({ user: userId })
-    if (!cart || !cart.items?.length) {
+
+    // ✅ Optional: if order already exists (created by order-service), return success
+    const existingOrder = await Order.findOne({ "payment.razorpay_payment_id": razorpay_payment_id }).lean()
+    if (existingOrder) {
+      // best-effort: emit PAYMENT_SUCCESS again is optional; keeping it off to avoid duplicate downstream actions
       return res.status(200).json({
         success: true,
         payment_verified: true,
-        message: "Payment verified but cart is empty",
+        message: "Payment verified (order already created)",
+        orderId: existingOrder._id,
       })
     }
 
-    const totalAmount = cart.items.reduce(
-      (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || item.qty || 1),
-      0
-    )
+    // ✅ Do NOT clear cart here. order-service will clear cart after creating order.
+    // ✅ Publish payment success so other services (notification, analytics) can react.
+    publish("PAYMENT_SUCCESS", {
+      userId,
+      payment: { razorpay_order_id, razorpay_payment_id },
+    }).catch((e) => console.error("Failed to publish PAYMENT_SUCCESS", e))
 
-    const orderProducts = cart.items.map((item) => ({
-      product: item.product,
-      category: item.category,
-      title: item.title,
-      price: item.price,
-      image: item.image,
-      qty: item.quantity || item.qty || 1,
-    }))
-
-    const newOrder = new Order({
-      user: userId,
-      products: orderProducts,
-      totalAmount,
-      status: "Pending",
-      payment: { razorpay_order_id, razorpay_payment_id, razorpay_signature },
+    return res.status(200).json({
+      success: true,
+      payment_verified: true,
+      message: "Payment verified",
+      razorpay_order_id,
+      razorpay_payment_id,
     })
-
-    await newOrder.save()
-    await Cart.findOneAndUpdate({ user: userId }, { items: [], totalAmount: 0 })
-
-    // publish events (best-effort)
-    publish("ORDER_CREATED", { id: newOrder._id, user: newOrder.user, totalAmount: newOrder.totalAmount }).catch((e) =>
-      console.error("Failed to publish ORDER_CREATED", e)
-    )
-    publish("PAYMENT_SUCCESS", { orderId: newOrder._id, payment: { razorpay_order_id, razorpay_payment_id } }).catch((e) =>
-      console.error("Failed to publish PAYMENT_SUCCESS", e)
-    )
-
-    return res.status(200).json({ success: true, message: "Payment verified and order created", orderId: newOrder._id })
   } catch (err) {
     console.error("Verification Error:", err)
     return res.status(500).json({ success: false, message: "Verification error", error: err.message })

@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ChevronLeftIcon, LockClosedIcon } from "@heroicons/react/24/solid"
+import { ChevronLeftIcon, LockClosedIcon, XMarkIcon } from "@heroicons/react/24/solid"
 import { ShoppingCartContext } from "../../Context"
 import Layout from "../../Components/Layout"
 import { formatINR } from "../../utils"
@@ -9,20 +9,38 @@ import api from "../../api"
 const RAZORPAY_KEY = "rzp_test_SA848OYsod4lAU" // 🔑 Your Razorpay Public Key
 
 const CartSummary = () => {
-  const { cartItems, isUserAuthenticated, account } = useContext(ShoppingCartContext)
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
 
+  const {
+    cartItems = [],
+    isUserAuthenticated,
+    account,
+    updateCartQty,
+    removeFromCart,
+    loadCart, // (optional; if your context doesn't expose it, this will be undefined)
+  } = useContext(ShoppingCartContext)
+
+  // ✅ Fix #1: Always open this page at the top (prevents footer-first view)
   useEffect(() => {
-    if (!isUserAuthenticated) {
-      navigate('/sign-in')
-    }
+    window.scrollTo(0, 0)
+  }, [])
+
+  // Auth guard
+  useEffect(() => {
+    if (!isUserAuthenticated) navigate("/sign-in")
   }, [isUserAuthenticated, navigate])
 
-  const cartTotal = cartItems.reduce(
-    (sum, item) => sum + ((item.price || 0) * (item.quantity || 0)),
-    0
-  )
+  // Helpers: normalize id + qty safely (works for qty or quantity)
+  const getProductId = (item) => item?.product?._id || item?.product || item?._id
+  const getQty = (item) => Number(item?.qty ?? item?.quantity ?? 1) || 1
+
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => {
+      const qty = getQty(item)
+      return sum + (Number(item.price || 0) * qty)
+    }, 0)
+  }, [cartItems])
 
   // Save cart to backend before payment
   const syncCartToBackend = async () => {
@@ -30,31 +48,36 @@ const CartSummary = () => {
       const token = localStorage.getItem("token")
       if (!token) {
         alert("Please login first")
-        navigate('/sign-in')
+        navigate("/sign-in")
         return false
       }
 
-      // Sync each item via backend endpoints (backend handles add/increment)
       for (const item of cartItems) {
+        const productId = getProductId(item)
+        const qty = getQty(item)
+
+        if (!productId) continue
+
         try {
-          await api.put("/cart/update", {
-            productId: item.product,
-            qty: item.quantity || item.qty || 1
-          })
+          await api.put("/cart/update", { productId, qty })
         } catch (err) {
-          if (err.response && err.response.status === 404) {
+          // If update endpoint responds 404, fall back to add
+          if (err?.response?.status === 404) {
             await api.post("/cart", {
-              productId: item.product,
+              productId,
               category: item.category,
               title: item.title,
               price: item.price,
-              image: item.image
+              image: item.image,
             })
           } else {
             throw err
           }
         }
       }
+
+      // Optional refresh (if your context exposes loadCart)
+      if (typeof loadCart === "function") await loadCart()
 
       return true
     } catch (err) {
@@ -115,19 +138,19 @@ const CartSummary = () => {
               razorpay_signature: response.razorpay_signature,
             }
 
-            // VERIFY PAYMENT & CREATE ORDER IN ONE CALL
-            const verifyRes = await api.post(
-              "/payment/verify-payment",
-              payload
-            )
+            const verifyRes = await api.post("/payment/verify-payment", payload)
 
-            if (!verifyRes.data.success) {
+            if (!verifyRes?.data?.success) {
               alert("Payment verification failed ❌")
               return
             }
 
+            // ✅ optional: clear local cart storage so Home doesn't show old items
+            try {
+              localStorage.removeItem("cart")
+            } catch {}
+
             alert("Order Placed Successfully 🎉")
-            // Navigate to order confirmation page with the MongoDB order ID
             navigate(`/order-confirmation/${verifyRes.data.orderId}`)
           } catch (err) {
             console.error("Payment error:", err)
@@ -137,18 +160,15 @@ const CartSummary = () => {
 
         prefill: {
           name: account?.name || "Customer",
-          email: account?.email || "customer@test.com"
+          email: account?.email || "customer@test.com",
         },
 
-        theme: {
-          color: "#F4C430"
-        }
+        theme: { color: "#F4C430" },
       }
 
       setLoading(false)
       const razor = new window.Razorpay(options)
       razor.open()
-
     } catch (error) {
       console.error(error)
       alert("Payment Failed: " + error.message)
@@ -159,7 +179,6 @@ const CartSummary = () => {
   return (
     <Layout>
       <div className="max-w-screen-xl mx-auto px-4 py-6">
-
         {/* HEADER */}
         <div className="flex items-center gap-3 mb-6">
           <button
@@ -185,7 +204,6 @@ const CartSummary = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
             {/* LEFT */}
             <div className="lg:col-span-2 bg-white border rounded-lg p-5">
               <div className="flex justify-between border-b pb-3 mb-4">
@@ -193,40 +211,62 @@ const CartSummary = () => {
                 <span className="text-sm text-gray-500">Price</span>
               </div>
 
-              {cartItems.map(item => (
-                <div
-                  key={item.product}
-                  className="flex justify-between items-center border-b py-4"
-                >
-                  <div className="flex gap-4">
-                    <img
-                      src={item.image}
-                      className="w-24 h-24 object-contain"
-                      alt={item.title}
-                    />
+              {cartItems.map((item) => {
+                const productId = getProductId(item)
+                const qty = getQty(item)
 
-                    <div>
-                      <p className="font-medium">{item.title}</p>
+                return (
+                  <div
+                    key={productId || item.title}
+                    className="flex justify-between items-center border-b py-4"
+                  >
+                    <div className="flex gap-4">
+                      <img
+                        src={item.image}
+                        className="w-24 h-24 object-contain"
+                        alt={item.title}
+                      />
 
-                      <div className="flex items-center gap-2 mt-2">
-                        <button className="border px-2 rounded hover:bg-gray-100">
-                          −
-                        </button>
+                      <div>
+                        <p className="font-medium">{item.title}</p>
 
-                        <span className="font-medium">{item.quantity}</span>
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            onClick={() => updateCartQty(productId, qty - 1)}
+                            className="border px-2 rounded hover:bg-gray-100"
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
 
-                        <button className="border px-2 rounded hover:bg-gray-100">
-                          +
-                        </button>
+                          <span className="font-medium">{qty}</span>
+
+                          <button
+                            onClick={() => updateCartQty(productId, qty + 1)}
+                            className="border px-2 rounded hover:bg-gray-100"
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+
+                          <button
+                            onClick={() => removeFromCart(productId)}
+                            className="ml-3 text-gray-500 hover:text-red-600"
+                            title="Remove item"
+                            aria-label="Remove item"
+                          >
+                            <XMarkIcon className="h-5 w-5" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <p className="font-semibold">
-                    {formatINR((item.price || 0) * (item.quantity || 0))}
-                  </p>
-                </div>
-              ))}
+                    <p className="font-semibold">
+                      {formatINR((Number(item.price || 0) * qty) || 0)}
+                    </p>
+                  </div>
+                )
+              })}
 
               <div className="text-right mt-6 font-medium">
                 Subtotal ({cartItems.length} items):{" "}
@@ -242,9 +282,7 @@ const CartSummary = () => {
 
               <p className="text-lg mb-4">
                 Subtotal ({cartItems.length} items):{" "}
-                <span className="font-bold text-xl">
-                  {formatINR(cartTotal)}
-                </span>
+                <span className="font-bold text-xl">{formatINR(cartTotal)}</span>
               </p>
 
               {isUserAuthenticated ? (
@@ -265,7 +303,6 @@ const CartSummary = () => {
                 </button>
               )}
             </div>
-
           </div>
         )}
       </div>

@@ -1,10 +1,27 @@
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import Layout from "../../Components/Layout"
 import api from "../../api"
 
+// ✅ Both contexts exist in your project
+import { ShoppingCartContext } from "../../Context"
+import { StoreContext } from "../../Context/storeContext"
+
 const SignIn = () => {
   const navigate = useNavigate()
+
+  // ✅ SAFE: if provider not mounted, use empty object fallback
+  const shoppingCtx = useContext(ShoppingCartContext) || {}
+  const storeCtx = useContext(StoreContext) || {}
+
+  const {
+    setIsUserAuthenticated = () => {},
+    setAccount = () => {},
+  } = shoppingCtx
+
+  const {
+    login: storeLogin = () => {},
+  } = storeCtx
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -17,34 +34,29 @@ const SignIn = () => {
     setLoading(true)
 
     try {
-      const res = await api.post("/auth/login", {
-        email,
-        password,
-      })
+      const res = await api.post("/auth/login", { email, password })
+      const { token, user } = res.data || {}
 
-      const { token, user } = res.data
+      if (!token || !user) throw new Error("Invalid server response")
 
-      if (!token || !user) {
-        throw new Error("Invalid server response")
-      }
-
-      // Store auth data
+      // ✅ Store auth data
       localStorage.setItem("token", token)
       localStorage.setItem("user", JSON.stringify(user))
 
-      // Redirect by role
-      if (user.role === "admin") {
-        navigate("/", { replace: true })
-      } else {
-        navigate("/", { replace: true })
-      }
+      // ✅ Update BOTH contexts so UI updates instantly (NO refresh)
+      // Navbar depends on ShoppingCartContext
+      setAccount(user)
+      setIsUserAuthenticated(true)
 
+      // Other pages may depend on StoreContext
+      // Your StoreContext.login expects some "data"; we pass user + token safely.
+      storeLogin({ ...user, token })
+
+      // ✅ Redirect
+      navigate("/", { replace: true })
     } catch (err) {
       console.error("Login error:", err.response?.data || err.message)
-
-      setError(
-        err.response?.data?.message || "Invalid email or password"
-      )
+      setError(err.response?.data?.message || "Invalid email or password")
     } finally {
       setLoading(false)
     }
@@ -54,9 +66,7 @@ const SignIn = () => {
     <Layout showAds={false}>
       <div className="min-h-[calc(100vh-140px)] flex items-center justify-center px-4">
         <div className="w-full max-w-sm bg-white border rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-center mb-6">
-            Sign in
-          </h2>
+          <h2 className="text-2xl font-bold text-center mb-6">Sign in</h2>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -85,9 +95,7 @@ const SignIn = () => {
               />
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             <button
               type="submit"

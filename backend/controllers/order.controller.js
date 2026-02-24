@@ -3,6 +3,7 @@ import Cart from "../models/cart.model.js"
 
 export const placeOrder = async (req, res) => {
   try {
+    console.log("[DEBUG] placeOrder called", { ts: new Date().toISOString(), body: req.body, user: req.user && req.user._id })
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -12,6 +13,7 @@ export const placeOrder = async (req, res) => {
     const userId = req.user._id
 
     const cart = await Cart.findOne({ user: userId })
+    console.log("[DEBUG] placeOrder - cart snapshot", { userId, items: cart?.items, totalAmount: cart?.totalAmount })
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty" })

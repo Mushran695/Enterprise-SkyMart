@@ -89,6 +89,7 @@ export const verifyPayment = async (req, res) => {
 
     // 5️⃣ Compare
     if (expectedSignature === razorpay_signature) {
+      console.log("[DEBUG] verifyPayment matched signature", { ts: new Date().toISOString(), razorpay_order_id, razorpay_payment_id })
       console.log("✅ Payment signature MATCHED")
       
       // 6️⃣ Save order to MongoDB
@@ -97,6 +98,14 @@ export const verifyPayment = async (req, res) => {
         
         // Get cart items for the user
         const cart = await Cart.findOne({ user: userId })
+        console.log("[DEBUG] Cart snapshot before creating order", { ts: new Date().toISOString(), userId, cartItems: cart?.items, cartTotal: cart?.totalAmount })
+        // Log existing orders with same payment id (debug)
+        try {
+          const existing = await Order.find({ 'payment.razorpay_payment_id': razorpay_payment_id })
+          console.log("[DEBUG] existing orders with same razorpay_payment_id:", existing.length)
+        } catch (e) {
+          console.error("[DEBUG] error checking existing orders:", e)
+        }
         if (!cart || !cart.items.length) {
           return res.status(400).json({
             success: true,

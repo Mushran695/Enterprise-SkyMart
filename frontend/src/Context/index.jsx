@@ -199,6 +199,10 @@ export const ShoppingCartProvider = ({ children }) => {
     console.error("Qty update failed")
   }
 }
+// ✅ ADD IT RIGHT HERE (same level as updateCartQty)
+// const clearCartUI = () => {
+//   setCartItems([])
+// }
 
   /* ======================
       FILTER HELPERS
@@ -267,6 +271,7 @@ export const ShoppingCartProvider = ({ children }) => {
         removeFromCart,
         updateCartQty,
         checkoutOrder,
+        // clearCartUI,
 
         orders,
 

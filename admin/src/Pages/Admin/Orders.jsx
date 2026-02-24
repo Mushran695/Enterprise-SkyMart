@@ -123,7 +123,7 @@ const Orders = () => {
                     <td className="p-3 flex gap-2">
                       <button
                         onClick={() => navigate(`/orders/${order.id}`)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded"
+                        className="px-3 py-2 bg-blue-600 text-white rounded min-h-[44px]"
                       >
                         View
                       </button>
@@ -131,7 +131,7 @@ const Orders = () => {
                         <select
                           value={order.status}
                           onChange={e => updateStatus(order.id, e.target.value)}
-                          className="border px-2 py-1 rounded"
+                          className="border px-2 py-2 rounded"
                         >
                           <option value="Pending">Pending</option>
                           <option value="Shipped">Shipped</option>
