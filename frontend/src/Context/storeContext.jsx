@@ -78,7 +78,7 @@ export const StoreProvider = ({ children }) => {
 
   const setMaxPrice = (max) => {
     if (max == null) return setPriceRange(null)
-    const min = (priceRange && priceRange[0]) || 0
+    const min = (priceRange && priceRange[0]) || 100
     setPriceRange([min, Number(max)])
   }
   const filteredProducts = useMemo(() => {

@@ -58,20 +58,31 @@ const Home = () => {
      Auto Banner Scroll
   ======================= */
   useEffect(() => {
-    const slider = sliderRef.current
-    if (!slider) return
+  const slider = sliderRef.current
+  if (!slider) return
 
-    let index = 0
-    const interval = setInterval(() => {
-      index = (index + 1) % banners.length
-      slider.scrollTo({
-        left: slider.clientWidth * index,
-        behavior: "smooth",
-      })
-    }, 3500)
+  let index = 0
 
-    return () => clearInterval(interval)
-  }, [])
+  const goTo = (i) => {
+    slider.scrollTo({
+      left: slider.clientWidth * i,
+      behavior: "smooth",
+    })
+  }
+
+  const interval = setInterval(() => {
+    index = (index + 1) % banners.length
+    goTo(index)
+  }, 3500)
+
+  const onResize = () => goTo(index)
+  window.addEventListener("resize", onResize)
+
+  return () => {
+    clearInterval(interval)
+    window.removeEventListener("resize", onResize)
+  }
+}, [banners.length])
 
   const scrollLeft = () => {
     sliderRef.current?.scrollBy({
@@ -117,21 +128,66 @@ const Home = () => {
   return (
     <Layout>
       {/* BANNERS */}
-      <div className="relative w-full max-w-screen-xl mx-auto mt-4 mb-6 px-3 sm:px-6">
-        <button onClick={scrollLeft} className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white p-2 shadow rounded-full">
-          <ChevronLeftIcon className="h-6 w-6" />
-        </button>
+<div className="relative w-full max-w-screen-xl mx-auto mt-4 mb-6 px-3 sm:px-6">
+  {/* arrows stay same behavior; still hidden on mobile */}
+  <button
+    onClick={scrollLeft}
+    className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur p-2 shadow rounded-full hover:bg-white transition"
+    aria-label="Previous banner"
+  >
+    <ChevronLeftIcon className="h-6 w-6" />
+  </button>
 
-        <div ref={sliderRef} className="flex overflow-hidden rounded-xl">
-          {banners.map((banner, i) => (
-            <img key={i} src={banner} alt="Banner" className="min-w-full h-[180px] sm:h-[280px] lg:h-[360px] object-cover" />
-          ))}
+  <div
+    ref={sliderRef}
+    className="
+      banner-scroll
+      flex w-full
+      overflow-x-auto sm:overflow-hidden
+      scroll-smooth
+      snap-x snap-mandatory
+      rounded-xl
+      [-ms-overflow-style:none] [scrollbar-width:none]
+    "
+  >
+    {/* hide scrollbar (webkit) */}
+    <style>{`
+      .banner-scroll::-webkit-scrollbar { display: none; }
+    `}</style>
+
+    <div className="banner-track flex w-full">
+      {banners.map((banner, i) => (
+        <div
+          key={i}
+          className="
+            min-w-full flex-shrink-0
+            snap-start
+          "
+        >
+          {/* Aspect ratio keeps banner stable on all screens */}
+    <div className="relative w-full aspect-[16/7] sm:aspect-[16/6] bg-gray-100 overflow-hidden rounded-xl">
+      <img
+        src={banner}
+        alt={`Banner ${i + 1}`}
+        className="absolute inset-0 w-full h-full object-cover"
+        draggable={false}
+        loading={i === 0 ? "eager" : "lazy"}
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10" />
+    </div>
         </div>
-
-        <button onClick={scrollRight} className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white p-2 shadow rounded-full">
-          <ChevronRightIcon className="h-6 w-6" />
-        </button>
+        ))}
       </div>
+    </div>
+
+     <button
+        onClick={scrollRight}
+        className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur p-2 shadow rounded-full hover:bg-white transition"
+        aria-label="Next banner"
+      >
+    <ChevronRightIcon className="h-6 w-6" />
+     </button>
+    </div>
 
       <CategoryTabs />
 

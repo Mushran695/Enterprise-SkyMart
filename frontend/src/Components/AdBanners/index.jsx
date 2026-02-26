@@ -11,7 +11,7 @@ const AdBanners = () => {
         {ads.map((ad, i) => (
           <div
             key={i}
-            className="h-[160px] sm:h-[180px] md:h-[160px] overflow-hidden rounded-lg shadow-sm hover:shadow-md transition"
+            className="h-[200px] sm:h-[240px] md:h-[220px] overflow-hidden rounded-lg shadow-sm hover:shadow-md transition"
           >
             <img
               src={ad}

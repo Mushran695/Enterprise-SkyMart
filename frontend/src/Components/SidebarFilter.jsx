@@ -13,7 +13,7 @@ const SidebarFilter = () => {
   } = useContext(ShoppingCartContext)
 
   const categories = ["Fashion", "Electronics", "Beauty", "Wellness"]
-  const [price, setPrice] = useState(100000)
+  const [price, setPrice] = useState(200000)
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     price: true,
@@ -34,7 +34,7 @@ const SidebarFilter = () => {
     setOnlyFeatured(false)
     setOnlyDiscount(false)
     setMaxPrice(null)
-    setPrice(100000)
+    setPrice(200000)
   }
 
   return (
@@ -106,7 +106,7 @@ const SidebarFilter = () => {
             {expandedSections.price && (
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-600 font-medium">₹0</span>
+                  <span className="text-xs text-gray-600 font-medium">₹100</span>
                   <span className="text-sm font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
                     ₹{price.toLocaleString('en-IN')}
                   </span>
@@ -114,8 +114,8 @@ const SidebarFilter = () => {
 
                 <input
                   type="range"
-                  min="0"
-                  max="100000"
+                  min="100"
+                  max="200000"
                   step="500"
                   value={price}
                   onChange={(e) => {
@@ -123,12 +123,12 @@ const SidebarFilter = () => {
                     setPrice(value)
                     setMaxPrice(value)
                   }}
-                  className="w-full h-2 bg-gray-200 rounded-lg accent-orange-500 cursor-pointer hover:accent-orange-600"
+                  className="w-full h-2 bg-gray-200 rounded-lg accent-blue-500 cursor-pointer hover:accent-orange-600"
                 />
 
                 <div className="flex justify-between text-xs text-gray-600">
                   <span>Min</span>
-                  <span>Max: ₹100,000</span>
+                  <span>Max: ₹200,000</span>
                 </div>
               </div>
             )}
