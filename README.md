@@ -1,319 +1,183 @@
-# 🛒 SkyMart — MERN E‑Commerce Platform
+SkyMart Enterprise — Distributed E-Commerce Platform
 
-Professional, production-ready full-stack E‑Commerce reference application built with React (Vite), Node.js, Express, MongoDB and Razorpay.
+SkyMart Enterprise is a production-style monorepo implementing a microservices-based e-commerce platform with separate Storefront and Admin applications, containerized backend services, and event-driven communication.
 
-Live demo and reference deployment links are provided below. This repository is suitable for portfolio showcase, production deployments, and open-source contributions.
+This project demonstrates distributed system architecture, Docker orchestration, API Gateway routing, and AWS EC2 deployment.
 
----
+Live Deployment
 
-## 🔎 Short Description
+Storefront: https://www.skymartapp.com
 
-SkyMart is a modern, API-driven E‑Commerce application implementing best-practice patterns for authentication, role-based access, payments, and admin operations. It includes a mobile-first responsive storefront, a secure backend API, and an Admin Dashboard for product and order management.
+Admin Panel: https://admin.skymartapp.com
 
----
+API Gateway: https://api.skymartapp.com
 
-## 🔗 Live Demo URLs
+Demo admin access available upon request.
 
-| Role | Frontend | Backend |
-|---|---:|---:|
-| Production (Frontend) | https://sky-mart.example.com (replace with deployed URL) | https://api.sky-mart.example.com (replace with deployed URL)
+Architecture Overview
 
-> Note: Replace the example demo URLs above with your actual Vercel / Render deployment links.
+![Architecture](assets/architecture.png)
 
----
+System Flow
 
-## 🧰 Tech Stack
+Storefront and Admin applications communicate via HTTPS to the API Gateway.
 
-- Frontend: React 18 + Vite, React Router, Tailwind CSS, Context API
-- Backend: Node.js, Express.js, RESTful APIs
-- Database: MongoDB (Mongoose models)
-- Payments: Razorpay integration (server-side signature verification)
-- Hosting / Deployment: Vercel (frontend), Render / Heroku / Render for backend
-- Tooling: ESLint, Prettier, Nodemon (dev), Vite build
+Nginx (Docker container) routes traffic to backend microservices.
 
----
+Each service runs in an isolated Docker container.
 
-## 🏗 Project Architecture (text diagram)
+Services communicate internally via Docker networking.
 
-The system follows a classic client-server architecture with a clear separation of concerns:
+Kafka enables asynchronous event-driven workflows.
 
-- Browser (React) ⇄ REST API (Express) ⇄ MongoDB
-- Payments: Browser opens Razorpay checkout → Razorpay posts result → Backend verifies signature → Backend creates Order from server Cart
-- Admin Dashboard: Authenticated admin calls protected API endpoints (adminOnly middleware) for product/order management
+MongoDB and Redis provide persistence and caching layers.
 
-Simplified flow:
+Microservices
+Service	Port	Responsibility
+auth-service	3000	JWT authentication & role-based access control
+product-service	3001	Product catalog APIs
+order-service	3002	Order lifecycle management
+payment-service	3003	Razorpay integration & verification
+analytics-service	3004	Kafka-based event processing
+admin-service	3005	Administrative APIs
+nginx (API Gateway)	8080	Reverse proxy & routing
+Infrastructure Containers
 
-1. User browses products (GET /api/products)
-2. User adds items (local Context + optional sync to server Cart via /api/cart)
-3. Checkout creates a Razorpay order (POST /api/payment/create-order)
-4. Razorpay payment completes; frontend posts signature to /api/payment/verify-payment
-5. Server verifies signature and atomically creates an Order from server-side Cart
+MongoDB
 
----
+Redis
 
-## ✨ Key Features
+Kafka
 
-- User authentication: Sign up / Sign in flows
-- JWT-based secure sessions with Authorization headers
-- Product browsing, filtering and categories
-- Cart management with server-side cart persistence
-- Order placement and order history
-- Razorpay payment integration and server-side verification
-- Admin Dashboard with analytics, product and order management
-- Role-based access control (adminOnly middleware)
-- Mobile-responsive UI (Tailwind CSS)
-- API-driven architecture for decoupled front/back development
+Zookeeper
 
----
+All services are orchestrated via Docker Compose on AWS EC2 (Ubuntu).
 
-## 🗂 Folder Structure (high level)
+Frontend Applications
+Storefront (/frontend)
 
-Root overview (important folders/files):
+React + Vite
 
-```
-/.               # repo root (frontend + backend folders)
-├─ backend/       # Express API, controllers, models, routes
-│  ├─ controllers/ # business logic (auth, product, cart, order, payment, analytics)
-│  ├─ models/      # Mongoose schemas (User, Product, Cart, Order)
-│  ├─ routes/      # Express route definitions
-│  ├─ config/      # DB + 3rd-party config (Razorpay)
-│  └─ index.js     # server bootstrap
-├─ src/            # Frontend (Vite + React)
-│  ├─ Components/  # Reusable UI components and admin UI
-│  ├─ Pages/       # Route pages (Home, Product, Cart, Admin, etc.)
-│  ├─ Context/     # React Context store for global state
-│  ├─ services/    # API client wrappers (axios, adminApi, productApi)
-│  └─ main.jsx     # Frontend bootstrap
-├─ public/         # Static assets
-├─ package.json    # root scripts (dev, build, etc.)
-└─ backend/package.json
-```
+Customer-facing SPA
 
-Frontend notes:
-- `src/Context/storeContext.jsx` centralizes auth, products, cart, filters and sync logic.
-- `src/services/axios.js` contains axios instance and interceptors (auto-logout on 401).
+Admin Panel (/admin)
 
-Backend notes:
-- Controllers use `protect` middleware to validate JWT and `adminOnly` to enforce admin access.
-- Razorpay verification happens in `backend/controllers/payment.controller.js`.
+React + Vite
 
----
+Administrative management interface
 
-## 🔌 API Endpoints Overview
+Both frontends are deployed on Vercel.
 
-**Authentication**
-- POST /api/auth/register — create account
-- POST /api/auth/login — returns `{ token, user }`
+Technology Stack
+Frontend
 
-**Products**
-- GET /api/products — public list
-- GET /api/products/:id — product detail
+React (Vite)
 
-**Cart**
-- GET /api/cart — get current user's cart (protected)
-- POST /api/cart — add item (protected)
-- DELETE /api/cart/:id — remove item (protected)
-- PUT /api/cart/update — set item quantity (protected)
+Tailwind CSS
 
-**Orders**
-- POST /api/orders — create order (protected)
-- GET /api/orders/my — get user orders (protected)
+React Router
 
-**Payments**
-- POST /api/payment/create-order — create Razorpay order (server)
-- POST /api/payment/verify-payment — verify Razorpay signature and create Order (server)
+Backend
 
-**Admin (protected + adminOnly)**
-- GET /api/admin/products — admin product CRUD
-- GET /api/admin/orders — admin order listing
-- GET /api/analytics/* — analytics endpoints
+Node.js microservices (REST APIs)
 
-Refer to `backend/routes/` for full route list and `backend/controllers/` for request/response details.
+Nginx API Gateway
 
----
+Infrastructure
 
-## ⚙️ Environment Variables
+Docker
 
-Create `.env` in `backend/` (and `.env` in frontend if needed). Required variables:
+Docker Compose
 
-```
-PORT=5000
-MONGODB_URI=your-mongodb-connection-string
-JWT_SECRET=your_jwt_secret
-RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-```
+MongoDB
 
-Frontend (Vite) optional envs (create `.env.local`):
+Redis
 
-```
-VITE_API_URL=http://localhost:5000
-VITE_RAZORPAY_KEY=rzp_test_...    # optional override for testing
-```
+Apache Kafka
 
----
+Zookeeper
 
-## ▶️ How to Run Locally
+Cloud & Hosting
 
-Prerequisites:
-- Node.js 18+ (LTS recommended)
-- npm or yarn
-- MongoDB Atlas connection (or local MongoDB)
+AWS EC2 (Ubuntu)
 
-**Frontend**
+Vercel (Frontend hosting)
 
-```bash
-# from repo root
+HTTPS with custom domains
+
+Docker & Infrastructure
+
+The backend stack is managed using Docker Compose:
+
+cd skymart-enterprise-backend
+docker compose up -d
+
+All microservices run as isolated containers.
+
+Infrastructure services (MongoDB, Redis, Kafka, Zookeeper) run within the same compose network.
+
+The Nginx container exposes port 8080 and forwards traffic to internal services.
+
+Event-Driven Design
+
+Kafka is used for asynchronous communication between services:
+
+Payment verification → Order service update
+
+Order creation → Analytics processing
+
+This architecture improves scalability, decouples services, and enables resilient workflows.
+
+Local Development
+Start Backend & Infrastructure
+cd skymart-enterprise-backend
+docker compose up -d
+Run Storefront
+cd frontend
 npm install
-npm run dev         # starts Vite dev server (http://localhost:5173)
-```
-
-**Backend**
-
-```bash
-cd backend
+npm run dev
+Run Admin Panel
+cd admin
 npm install
-cp .env.example .env   # or create .env with variables above
-npm run dev            # nodemon / dev server on PORT (default 5000)
-```
+npm run dev
+Deployment Strategy
 
-Notes:
-- Frontend calls the backend using `src/services/baseUrl.js` or `VITE_API_URL`.
-- Ensure both frontend and backend are running and that `VITE_API_URL` points to your backend during development.
+Frontend: Deployed on Vercel with SPA rewrite configuration.
 
----
+Backend: Deployed on AWS EC2 using Docker Compose.
 
-## 🚀 Deployment (Vercel & Render)
+API Gateway: Nginx container handles routing and TLS termination.
 
-**Frontend (Vercel)**
-1. Connect your GitHub repo to Vercel.
-2. Set `Build Command` → `npm run build` and `Output Directory` → `dist`.
-3. Add environment variable `VITE_API_URL` to point to your backend URL.
+Networking: HTTPS enforced in production.
 
-**Backend (Render)**
-1. Create a new Web Service on Render, connect to repo's `backend/` folder.
-2. Set the build command: `npm install` and start command: `npm start` or `npm run dev` for staging.
-3. Add environment variables (MongoDB URI, JWT_SECRET, Razorpay keys) in the Render dashboard.
+Security Considerations
 
-DNS and CORS
-- Configure CORS in backend to allow your frontend origin.
-- Use HTTPS endpoints in production.
+JWT-based authentication and authorization
 
----
+Role-based access control
 
-## 🗄 Database Setup (MongoDB Atlas)
+Environment-based secret management
 
-1. Create a free MongoDB Atlas cluster.
-2. Create a database user and whitelist your IP (or 0.0.0.0/0 for dev).
-3. Copy the connection string and set `MONGODB_URI` in backend `.env`.
-4. Run any seed scripts if provided: `node backend/scripts/migrate_db.js` or `npm run seed`.
+Razorpay server-side signature verification
 
----
+Gateway-level routing isolation
 
-## 🔐 Admin Access
+Engineering Highlights
 
-- There is a `backend/scripts/createAdmin.js` helper to create an admin user for development.
-- In production, create an admin via a secure admin-onboarding workflow or seed the DB manually.
+Microservices-based architecture
 
----
+Event-driven communication using Kafka
 
-## 💳 Payment Gateway (Razorpay) Setup
+API Gateway pattern
 
-1. Create a Razorpay account and get `KEY_ID` and `KEY_SECRET` (test mode available).
-2. Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in backend `.env`.
-3. Frontend uses the public key to open checkout; backend must verify signature using the secret in `/api/payment/verify-payment`.
-4. Test using Razorpay test cards and sandbox modes.
+Container-first deployment model
 
----
+Cloud deployment on AWS EC2
 
-## 🛡 Security Features
+Domain + SSL configuration
 
-- JWT-based authentication with `Authorization: Bearer <token>` for protected routes.
-- `protect` middleware validates tokens; `adminOnly` middleware restricts admin APIs.
-- Server-side payment signature verification to prevent spoofed payments.
-- Input validation and error handling in controllers (recommend adding JOI/zod for stricter validation).
-- CORS and rate-limiting advised for production.
+Production debugging and service isolation experience
 
----
+License
 
-## 📱 Mobile & Desktop Compatibility
-
-- Mobile-first responsive UI built with Tailwind CSS. Components are tested across common breakpoints.
-- Recommended browsers: latest Chrome, Firefox, Safari, Edge.
-
----
-
-## 🖼 Screenshots
-
-Add screenshots to `/public/screenshots/` and reference them here:
-
-![Home](/public/screenshots/home.png)
-![Product](/public/screenshots/product.png)
-![Cart](/public/screenshots/cart.png)
-![Admin](/public/screenshots/admin.png)
-
----
-
-## 🔭 Future Enhancements
-
-- Stronger input validation (Joi/Zod) and centralized error middleware
-- Webhooks for payment and order lifecycle events
-- Improved unit and integration test coverage (Jest, Supertest)
-- Image CDN + optimized media pipeline
-- Internationalization (i18n) and multi-currency support
-- CI/CD pipelines and automated deployments
-
----
-
-## 🧰 Troubleshooting
-
-- 401 on API calls: check `JWT_SECRET` consistency and token storage in `localStorage`.
-- Razorpay signature errors: ensure server uses the correct secret and the payload matches Razorpay docs.
-- CORS errors: add frontend origin to backend CORS whitelist.
-- Production build errors: ensure `VITE_API_URL` is set in environment variables.
-
----
-
-## 🤝 Contribution Guidelines
-
-1. Fork the repository and create a feature branch: `feature/your-feature`.
-2. Keep changes small and focused; run tests locally.
-3. Submit a pull request with a clear description and link to any relevant issue.
-4. Follow the repository's code style (ESLint + Prettier). Add tests for new behavior.
-
----
-
-## 📜 License
-
-This project is open-source. Choose an appropriate license (MIT recommended). Example:
-
-```
 MIT License
-Copyright (c) 2026 Your Name
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-```
-
----
-
-## ❤️ Credits
-
-- Original project scaffold and architecture by the SkyMart authors.
-- Built with open-source technologies: React, Express, MongoDB, Razorpay.
-
----
-
-## 📌 Final Notes
-
-This repository is production-ready as a reference; before going live, review security settings, rotate secrets, enable SSL, add monitoring/logging, and create data backups. If you want, I can also:
-
-- Add automated tests (Jest + Supertest)
-- Add CI/CD configuration for Vercel / Render
-- Harden security (rate limiting, helmet, stricter input validation)
-
-Thank you for using this project — great choice for a modern MERN showcase.
